@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oak</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M5 13.5C5 8.8 9.9 5 16 5s11 3.8 11 8.5c0 .8-.7 1.5-1.5 1.5h-19C5.7 15 5 14.3 5 13.5z%27 fill=%27%23141416%27/%3E%3Cpath d=%27M16 5V2.5%27 stroke=%27%23141416%27 stroke-width=%272.2%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M7.5 17h17c0 6-3.8 11.5-8.5 11.5S7.5 23 7.5 17z%27 fill=%27%2322C55E%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --canvas:#F6F6F7; --raised:#FFFFFF; --hover:#F2F2F4; --press:#EBEBEE;
+  --line:#EAEAED; --line-2:#DCDCE0;
+  --text:#141416; --text-2:#5C5C66; --text-3:#9898A2;
+  --accent:#15803D; --accent-soft:#EAF7EE; --on-accent:#FFFFFF;
+  --miss:#141416; --miss-soft:#EFEFF2; --miss-line:#C8C8CF; --miss-dot:#9A9AA4;
+  --done:#15803D; --done-soft:#EAF7EE; --done-dot:#22C55E;
+  --danger:#C2341F;
+  --shadow:0 1px 2px rgba(20,20,22,.04),0 8px 24px rgba(20,20,22,.08);
+  --shadow-lg:0 2px 6px rgba(20,20,22,.05),0 24px 64px rgba(20,20,22,.16);
+  --font:'Geist','Noto Sans Hebrew',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#121214; --canvas:#0D0D0F; --raised:#18181B; --hover:#1E1E22; --press:#26262B;
+  --line:#26262B; --line-2:#33333A;
+  --text:#EDEDF0; --text-2:#A1A1AA; --text-3:#6B6B75;
+  --accent:#4ADE80; --accent-soft:#0F2417; --on-accent:#0D0D0F;
+  --miss:#EDEDF0; --miss-soft:#26262B; --miss-line:#44444C; --miss-dot:#6B6B75;
+  --done:#4ADE80; --done-soft:#0F2417; --done-dot:#22C55E; --danger:#F87171;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 24px 64px rgba(0,0,0,.55);
+}
+@media (prefers-color-scheme:dark){:root[data-theme="system"]{color-scheme:dark;
+  --bg:#121214; --canvas:#0D0D0F; --raised:#18181B; --hover:#1E1E22; --press:#26262B;
+  --line:#26262B; --line-2:#33333A;
+  --text:#EDEDF0; --text-2:#A1A1AA; --text-3:#6B6B75;
+  --accent:#4ADE80; --accent-soft:#0F2417; --on-accent:#0D0D0F;
+  --miss:#EDEDF0; --miss-soft:#26262B; --miss-line:#44444C; --miss-dot:#6B6B75;
+  --done:#4ADE80; --done-soft:#0F2417; --done-dot:#22C55E; --danger:#F87171;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 24px 64px rgba(0,0,0,.55);
+}}
+.theme{display:inline-flex;background:var(--canvas);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.theme button{border:0;background:none;width:28px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--text-3)}
+.theme button:hover{color:var(--text)}
+.theme button[aria-pressed="true"]{background:var(--raised);color:var(--text);box-shadow:0 1px 2px rgba(20,20,22,.08),0 0 0 1px var(--line)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--text);font:400 14px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11"}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+svg{flex:none}
+.muted{color:var(--text-3)}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--raised);font-weight:500;font-size:13px;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{background:var(--hover)}
+.btn:active{background:var(--press)}
+.btn.primary{background:var(--text);border-color:var(--text);color:var(--bg)}
+.btn.primary:hover{opacity:.88;background:var(--text)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--text-2)}
+.btn.ghost:hover{background:var(--hover);color:var(--text)}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2);border-radius:4px;padding:0 5px;line-height:17px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;gap:10px;padding:0 24px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:-.02em}
+.leaf .cap{fill:var(--text)}.leaf .stem{stroke:var(--text)}.leaf .nut{fill:var(--done-dot)}
+.crumb{color:var(--text-3);font-size:13px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.crumb a{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);text-decoration:none;padding:4px 8px;border-radius:6px;max-width:220px}
+.crumb a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crumb a:hover{background:var(--hover);color:var(--text)}
+.search{position:relative;display:flex;align-items:center}
+.search input{height:32px;width:280px;border:1px solid var(--line);border-radius:8px;padding:0 44px 0 32px;background:var(--canvas);transition:border-color .12s,background .12s,width .2s}
+.search input:focus{outline:none;border-color:var(--accent);background:var(--raised);width:340px}
+.search svg{position:absolute;left:10px;color:var(--text-3);pointer-events:none}
+.search kbd{position:absolute;right:9px;pointer-events:none}
+.me{border:0;background:none;padding:0;border-radius:50%;display:flex}
+.me .av{width:28px;height:28px;font-size:11px}
+
+/* month strip */
+.page{max-width:1360px;margin:0 auto;padding:0 24px 140px}
+.strip{display:flex;align-items:center;gap:4px;padding:20px 2px 2px;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.mo{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 13px;border:1px solid transparent;border-radius:17px;background:none;color:var(--text-2);font-size:13px;font-weight:500;white-space:nowrap;transition:background .12s,color .12s}
+.mo:hover{background:var(--hover);color:var(--text)}
+.mo[aria-current="true"]{background:var(--text);color:var(--bg)}
+.mo .badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;background:var(--miss-soft);color:var(--miss)}
+.mo .badge.ok{background:var(--done-soft);color:var(--done);padding:0;width:20px}
+.mo .badge.ok svg{width:12px;height:12px}
+.mo > svg{margin-left:-2px;opacity:.6}
+.mo[aria-current="true"] .badge.ok{background:color-mix(in srgb,var(--bg) 20%,transparent);color:var(--bg)}
+.mo[aria-current="true"] .badge:not(.ok){background:var(--bg);color:var(--text)}
+.strip .gap{flex:none;width:1px;height:20px;background:var(--line);margin:0 6px}
+/* heading */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:28px 0 20px;border-bottom:1px solid var(--line)}
+.head h1{font-size:34px;line-height:1.1;font-weight:600;letter-spacing:-.035em;margin:0 0 8px}
+.head p{margin:0;color:var(--text-2)}
+.progress{display:inline-flex;align-items:center;gap:10px}
+.ring{--p:0;width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--done-dot) calc(var(--p)*1%),var(--line-2) 0);-webkit-mask:radial-gradient(circle 5px,transparent 98%,#000);mask:radial-gradient(circle 5px,transparent 98%,#000)}
+.sums{display:flex;gap:32px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat span{font-size:12px;color:var(--text-3)}
+.stat strong{font-size:17px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat strong.miss{color:var(--miss)}
+
+/* toolbar */
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 0}
+.tools .add-row{margin-left:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.field select{width:100%;height:38px;border:1px solid var(--line-2);border-radius:9px;padding:0 10px;background:var(--raised);color:inherit;font:inherit}
+.field .opt{font-weight:400;color:var(--text-3)}
+.seg{display:inline-flex;gap:2px;background:var(--canvas);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{border:0;background:none;height:26px;padding:0 10px;border-radius:7px;color:var(--text-2);font-weight:500;font-size:13px;display:flex;gap:6px;align-items:center}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--text);box-shadow:0 1px 2px rgba(20,20,22,.08),0 0 0 1px var(--line)}
+.seg .n{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.vr{width:1px;height:20px;background:var(--line);margin:0 4px}
+.chips{display:contents}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:1px solid transparent;background:none;color:var(--text-2);font-size:13px;font-weight:500}
+.chip:hover{background:var(--hover);color:var(--text)}
+.chip.on{background:var(--accent-soft);color:var(--accent)}
+.chip.on b{font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toggle{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:0;background:none;color:var(--text-2);font-weight:500;font-size:13px}
+.toggle:hover{background:var(--hover);color:var(--text)}
+.toggle[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.clear{border:0;background:none;color:var(--text-3);font-size:13px;padding:0 6px;height:30px;border-radius:8px}
+.clear:hover{color:var(--text);background:var(--hover)}
+
+/* table */
+.table{border-top:1px solid var(--line)}
+.tr{display:grid;grid-template-columns:var(--grid,40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px);align-items:center;min-height:48px;border-bottom:1px solid var(--line);position:relative}
+.tr.th{min-height:36px;font-size:12px;color:var(--text-3);font-weight:500;position:sticky;top:56px;z-index:5;background:var(--bg)}
+.c{padding:0 10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c.r{text-align:right}
+.c[dir="auto"]{text-align:left;unicode-bidi:plaintext}
+.th .c{display:flex;align-items:center;gap:4px}
+.th .c.r{justify-content:flex-end}
+.sort{border:0;background:none;padding:0;color:inherit;font-weight:500;display:inline-flex;gap:3px;align-items:center}
+.sort:hover,.sort[data-on]{color:var(--text)}
+.tr:not(.th){transition:background .1s}
+.tr:not(.th):hover{background:var(--canvas)}
+.tr:not(.th)::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:2px;background:var(--miss-dot);opacity:0}
+.tr.is-miss::before{opacity:1}
+.tr.selected{background:var(--accent-soft)!important}
+.date{color:var(--text-2);font-variant-numeric:tabular-nums}
+.vendor .open{border:0;background:none;padding:0;font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start}
+.vendor .open:hover{color:var(--accent)}
+.amt{font-weight:500}
+.note{color:var(--text-2)}
+.cb{appearance:none;flex:none;width:16px;height:16px;border:1.5px solid var(--line-2);border-radius:4px;margin:0 0 0 14px;display:grid;place-items:center;background:var(--raised);cursor:pointer;transition:background .1s,border-color .1s}
+.cb:hover{border-color:var(--text-3)}
+.cb:checked{background:var(--accent);border-color:var(--accent)}
+.cb:checked::after{content:"";width:8px;height:4px;border:2px solid var(--on-accent);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.who{display:inline-flex;align-items:center;gap:7px;border:0;background:none;padding:3px 8px 3px 3px;border-radius:14px;max-width:100%;color:var(--text-2);font-size:13px}
+.who:hover{background:var(--hover);color:var(--text)}
+.who span{overflow:hidden;text-overflow:ellipsis}
+.who.none{color:var(--text-3)}
+.tr:not(:hover) .who.none span{opacity:0}
+.av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:600;color:#fff;flex:none}
+.av.empty{background:transparent;border:1.5px dashed var(--line-2);color:var(--text-3);font-weight:400}
+.inv{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .12s,border-color .12s}
+.inv.missing{border:1px dashed var(--miss-line);background:transparent;color:var(--miss)}
+.inv.missing:hover{background:var(--miss-soft);border-style:solid}
+.inv.done{background:var(--done-soft);color:var(--done);border:1px solid transparent}
+a.inv.done:hover{border-color:currentColor}
+.inv.again{border:1px solid var(--text);background:var(--raised);color:var(--text)}
+.inv.again:hover{background:var(--hover)}
+.preview{margin:10px 0 4px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--canvas)}
+.preview iframe{display:block;width:100%;height:380px;border:0;background:var(--canvas)}
+.preview-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 6px 6px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--text-2);background:var(--raised)}
+.preview-bar > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-bar > span:last-child{display:flex;gap:2px;flex:none}
+.preview-bar .btn{height:28px;font-size:12px;text-decoration:none}
+.modal:has(.big-preview){width:min(1000px,100%)}
+.big-preview iframe{display:block;width:100%;height:78vh;border:0}
+.again-box{border:1px solid var(--line-2);border-left:3px solid var(--text);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.again-box strong{display:flex;align-items:center;gap:6px;font-size:13px}
+.again-box p{margin:4px 0 0;color:var(--text-2)}
+.files li.rejected > div > a,.files li.rejected > div > span{text-decoration:line-through;color:var(--text-3)}
+.rej{color:var(--danger)}
+.again-form{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--canvas)}
+.again-form label{display:block;font-weight:600;font-size:13px;margin-bottom:8px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.qchip{border:1px solid var(--line-2);background:var(--raised);border-radius:14px;padding:4px 10px;font-size:12px;color:var(--text-2)}
+.qchip:hover{border-color:var(--text);color:var(--text)}
+.req-note p b{font-weight:600}
+.drophint{display:none;font-size:13px;font-weight:600;color:var(--accent)}
+.tr.drop-target{background:var(--accent-soft)!important;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tr.drop-target .inv{display:none}
+.tr.drop-target .drophint{display:inline}
+.tr.just-done{animation:wash 1.4s ease-out}
+.tr.just-done .inv.done{animation:stamp .5s cubic-bezier(.2,.9,.3,1.25)}
+@keyframes stamp{0%{transform:scale(1.6) rotate(-8deg);opacity:0}60%{transform:scale(.95);opacity:1}100%{transform:none}}
+@keyframes wash{0%{background:var(--done-soft)}100%{background:transparent}}
+.empty-state{padding:72px 24px;text-align:center;color:var(--text-2)}
+.empty-state h3{margin:0 0 6px;color:var(--text);font-weight:600;font-size:17px;letter-spacing:-.01em}
+.empty-state p{margin:0 0 18px}
+
+/* selection bar */
+.selbar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);border-radius:12px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-lg);z-index:30;animation:rise .18s ease-out}
+@keyframes rise{from{transform:translate(-50%,10px);opacity:0}}
+.selbar .btn{background:transparent;border-color:transparent;color:inherit;height:32px}
+.selbar .btn:hover{background:color-mix(in srgb,var(--bg) 14%,transparent)}
+.selbar strong{font-weight:600;margin-right:10px;font-variant-numeric:tabular-nums;font-size:13px}
+.selbar strong span{opacity:.6;font-weight:400;margin-left:6px}
+
+/* pane */
+.scrim{position:fixed;inset:0;background:rgba(10,10,12,.12);z-index:40}
+.pane{position:fixed;top:8px;right:8px;bottom:8px;width:min(460px,calc(100vw - 16px));background:var(--raised);border:1px solid var(--line);border-radius:14px;z-index:41;overflow:auto;padding:16px 24px 40px;box-shadow:var(--shadow-lg)}
+.pane.enter{animation:slide .2s cubic-bezier(.2,.8,.2,1)}
+@keyframes slide{from{transform:translateX(16px);opacity:0}}
+.pane-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;color:var(--text-3);font-size:13px}
+.pane h2{font-size:24px;font-weight:600;letter-spacing:-.025em;margin:0 0 4px;line-height:1.2;word-break:break-word}
+.pane .sub{color:var(--text-2);margin:0 0 20px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin:0 0 24px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.facts dt{font-size:12px;color:var(--text-3);margin-bottom:3px}
+.facts dd{margin:0;font-weight:500;word-break:break-word}
+.pane section{margin-bottom:28px}
+.pane h3{font-size:13px;font-weight:600;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.files{list-style:none;margin:0 0 10px;padding:0}
+.files li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+.files a{font-weight:500;text-decoration:none;word-break:break-all}
+.files a:hover{color:var(--accent)}
+.files small{display:block;color:var(--text-3);font-size:12px}
+.files li > div{flex:1;min-width:0}
+.dropzone{border:1.5px dashed var(--line-2);border-radius:12px;padding:22px;text-align:center;color:var(--text-2);transition:background .12s,border-color .12s}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+.dropzone button{border:0;background:none;padding:0;color:var(--accent);font-weight:500}
+.status-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px 2px 8px;border-radius:12px}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.missing{background:var(--miss-soft);color:var(--miss)}
+.pill.done{background:var(--done-soft);color:var(--done)}
+.notes{list-style:none;margin:0 0 12px;padding:0}
+.notes li{padding:10px 0;border-bottom:1px solid var(--line)}
+.notes p{margin:0 0 3px;white-space:pre-wrap;word-break:break-word}
+.notes small{color:var(--text-3);font-size:12px}
+textarea{width:100%;min-height:80px;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;resize:vertical;background:var(--raised)}
+textarea:focus,.field input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.extra{font-size:13px}
+.extra div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.extra span:first-child{color:var(--text-3)}
+
+/* popover + dialogs */
+.pop{position:fixed;z-index:60;background:var(--raised);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);width:280px;padding:6px;animation:pop .12s ease-out}
+@keyframes pop{from{transform:translateY(-4px);opacity:0}}
+.pop input[type=search],.pop input[type=text]{width:100%;height:34px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 10px;margin-bottom:4px;background:transparent}
+.pop input:focus{outline:none}
+.opts{max-height:300px;overflow:auto;margin:0;padding:0;list-style:none}
+.opts label,.opts button{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;cursor:pointer;width:100%;border:0;background:none;text-align:left;font-size:13px}
+.opts label:hover,.opts button:hover{background:var(--hover)}
+.opts .v{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.opts .k{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.opts .cb{margin:0}
+.pop-foot{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
+.pop-foot button{border:0;background:none;color:var(--text-2);font-size:12px;font-weight:500;padding:5px 8px;border-radius:6px}
+.pop-foot button:hover{background:var(--hover);color:var(--text)}
+.modal-wrap{position:fixed;inset:0;background:rgba(10,10,12,.4);z-index:70;display:grid;place-items:center;padding:20px}
+.modal-wrap.enter{animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.modal{background:var(--raised);border:1px solid var(--line);border-radius:16px;width:min(600px,100%);max-height:calc(100vh - 40px);overflow:auto;box-shadow:var(--shadow-lg)}
+.modal header{padding:22px 24px 0}
+.modal h2{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:-.02em}
+.modal header p{margin:0;color:var(--text-2)}
+.modal .body{padding:18px 24px}
+.modal footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 24px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--raised)}
+.modal a{text-underline-offset:3px}
+ .sheets-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+.sheets-head h3{font-size:13px;font-weight:600;margin:0}
+.sheets{border:1px solid var(--line);border-radius:12px;overflow:hidden;max-height:300px;overflow-y:auto}
+.sheetrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.sheetrow:last-child{border-bottom:0}
+.sheetrow.plain{grid-template-columns:1fr auto;cursor:default}
+.sheetrow:hover{background:var(--canvas)}
+.sheetrow.off{cursor:default;color:var(--text-3)}
+.sheetrow .cb{margin:0}
+.sheetrow .nm{display:flex;flex-direction:column;min-width:0;text-align:left;font-weight:500}
+.sheetrow .nm small{font-weight:400;color:var(--text-3);font-size:12px}
+.sheetrow .ct{color:var(--text-2);font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+.custom-row{display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;align-items:center;margin-top:8px}
+.custom-row input{height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 10px;background:var(--raised)}
+.custom-row .btn{width:32px;padding:0}
+.add-col{display:inline-flex;align-items:center;gap:6px;margin-top:10px;border:1px dashed var(--line-2);background:none;border-radius:8px;height:34px;padding:0 12px;color:var(--text-2);font-weight:500;font-size:13px}
+.add-col:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.set-btn svg{opacity:.7}
+@media (min-width:761px){.set-btn svg{display:none}}
+.access{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:3px 8px 3px 4px;border-radius:14px;color:var(--text-3)}
+.access:hover{background:var(--hover);color:var(--text)}
+.access .stack{display:flex}
+.access .stack .av{width:22px;height:22px;font-size:9.5px;border:2px solid var(--bg);margin-left:-6px}
+.access .stack .av:first-child{margin-left:0}
+.access .more{font-size:12px;font-weight:500}
+.people{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.people li{display:flex;align-items:center;gap:10px}
+.people .av{width:28px;height:28px;font-size:11px}
+.people b{display:block;font-size:13px;font-weight:600}
+.people small{color:var(--text-3);font-size:12px}
+.set-tabs{display:flex;gap:2px;padding:12px 24px 0;border-bottom:1px solid var(--line)}
+.set-tabs button{border:0;background:none;padding:8px 12px 10px;font-size:13px;font-weight:500;color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.set-tabs button:hover{color:var(--text)}
+.set-tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--text)}
+.set-group[hidden]{display:none}
+.modal:has(.set-tabs){min-height:min(560px,calc(100vh - 40px))}
+.set-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0 24px!important}
+.set{padding-top:14px!important}
+.set-group{margin-bottom:20px}
+.set-group:last-child{margin-bottom:4px}
+.set-group h3{font-size:12px;font-weight:600;color:var(--text-3);margin:0 0 8px 2px}
+.set-box{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border-top:1px solid var(--line)}
+.set-box > .set-row:first-child,.set-box > form:first-child > .set-row:first-child,.set-box > form.set-row:first-child{border-top:0}
+.set-row b{display:block;font-weight:600;font-size:14px}
+.set-row p{margin:2px 0 0;color:var(--text-2);font-size:13px;max-width:52ch}
+.set-row p strong{color:var(--text);font-weight:600}
+.set-row > .btn,.set-row > a.btn{flex:none;text-decoration:none}
+.set-row.stack{flex-direction:column;align-items:stretch;gap:10px}
+.set-row .inline{display:flex;gap:8px}
+.set-row .inline input{flex:1;min-width:0;height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 11px;background:var(--raised)}
+.set-row .inline input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.set-row .err{margin:0;min-height:0}
+.set-row .err:empty{display:none}
+.switch{position:relative;flex:none;width:38px;height:22px;cursor:pointer}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;border-radius:11px;background:var(--line-2);transition:background .15s}
+.switch span::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+.switch input:checked + span{background:var(--accent)}
+.switch input:checked + span::after{transform:translateX(16px)}
+.switch input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.maps{display:grid;grid-template-columns:1fr 1fr;gap:2px 20px}
+.req{color:var(--danger)}
+@media (max-width:640px){.maps{grid-template-columns:1fr}}
+.maprow{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:center;padding:4px 0}
+.maprow label{color:var(--text-2);font-size:13px}
+select{height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 8px;background:var(--raised);width:100%}
+.match{padding:12px 0;border-bottom:1px solid var(--line)}
+.match:last-child{border-bottom:0}
+.match .fname{font-weight:500;margin-bottom:6px;word-break:break-all}
+.match .why{font-size:12px;color:var(--text-3);margin-top:5px}
+.match .why.good{color:var(--done)}
+.field{margin-bottom:16px}
+.field > label{display:block;font-weight:500;margin-bottom:6px;font-size:13px}
+.field input:not([type=checkbox]){width:100%;height:38px;border:1px solid var(--line-2);border-radius:9px;padding:0 12px;background:var(--raised)}
+.field input:disabled{opacity:.6}
+.check{display:flex;gap:8px;align-items:center;margin:10px 0 12px;font-size:13px}
+.check .cb{margin:0}
+.err{color:var(--danger);font-size:13px;margin:6px 0 0;min-height:1em}
+.hint{color:var(--text-3);font-size:13px;margin:6px 0 0}
+
+/* setup */
+.setup{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--canvas)}
+.setup-card{width:min(460px,100%);background:var(--raised);border:1px solid var(--line);border-radius:18px;padding:32px;box-shadow:var(--shadow)}
+.setup-card .leaf{width:32px;height:32px;margin-bottom:18px;display:block}
+.setup-card h1{font-size:26px;line-height:1.15;font-weight:600;letter-spacing:-.03em;margin:0 0 10px}
+.setup-card > p{color:var(--text-2);margin:0 0 24px}
+.setup-card .btn.primary{width:100%;height:40px;font-size:14px}
+.setup-card .signed{color:var(--text-3);font-size:13px;margin:18px 0 0;text-align:center}
+
+/* drag dock + toast */
+.dock{position:fixed;left:50%;bottom:24px;transform:translate(-50%,160%);width:min(480px,calc(100vw - 32px));background:var(--raised);border:1.5px dashed var(--line-2);border-radius:14px;padding:18px;text-align:center;z-index:50;transition:transform .22s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow-lg)}
+body.dragging .dock{transform:translate(-50%,0)}
+.dock.over{border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
+.dock strong{display:block;font-weight:600}
+.dock span{color:var(--text-2);font-size:13px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:90;max-width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;animation:rise .18s ease-out}
+.toast.bad{background:var(--danger);color:#fff}
+body:has(.selbar) .toast{bottom:84px}
+.demo{background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:500;text-align:center;padding:6px 12px}
+.loading{display:grid;place-items:center;min-height:100vh;color:var(--text-3)}
+
+
+/* login */
+.login{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);background:var(--bg)}
+.login-l{display:flex;flex-direction:column;padding:28px 56px;min-height:100vh}
+.login-main{margin:auto 0;max-width:440px;padding:48px 0}
+.login h1{font-size:44px;line-height:1.05;letter-spacing:-.045em;font-weight:600;margin:0 0 16px}
+.login-main > p{color:var(--text-2);font-size:16px;line-height:1.55;margin:0 0 32px;max-width:40ch}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;height:46px;width:100%;max-width:340px;border-radius:10px;border:1px solid var(--line-2);background:var(--raised);font-weight:500;font-size:15px;text-decoration:none;color:var(--text);transition:background .12s,box-shadow .12s;box-shadow:0 1px 2px rgba(20,20,22,.05)}
+.gbtn:hover{background:var(--hover)}
+.fine{color:var(--text-3);font-size:13px;margin:14px 0 0}
+.notice{background:var(--miss-soft);color:var(--miss);border-radius:10px;padding:12px 14px;margin:0 0 20px;font-size:14px;max-width:340px}
+.foot{color:var(--text-3);font-size:13px;margin:0}
+.login-r{background:var(--canvas);border-left:1px solid var(--line);display:grid;place-items:center;padding:48px;overflow:hidden;position:relative}
+.login-r::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 400px at 70% 20%,color-mix(in srgb,var(--done-dot) 10%,transparent),transparent 70%)}
+.mock{position:relative;width:min(560px,100%);background:var(--raised);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:22px 22px 10px;transform:rotate(-1.2deg)}
+.mock h4{margin:0 0 4px;font-size:20px;font-weight:600;letter-spacing:-.03em}
+.mock .progress{color:var(--text-2);font-size:13px;margin-bottom:16px}
+.mrow{display:grid;grid-template-columns:52px 1fr auto auto;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line);font-size:13px}
+.mrow .d{color:var(--text-3);font-variant-numeric:tabular-nums}
+.mrow .m{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .a{font-variant-numeric:tabular-nums;color:var(--text-2)}
+.mrow .inv{height:24px;font-size:12px;padding:0 8px}
+.mock .floating{position:absolute;right:-18px;bottom:64px;transform:rotate(4deg);background:var(--raised);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg);padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500}
+.mock .floating i{width:26px;height:32px;border-radius:4px;background:var(--canvas);border:1px solid var(--line-2);display:grid;place-items:center;font-style:normal;font-size:9px;color:var(--danger);font-weight:700}
+@media (max-width:900px){.login{grid-template-columns:1fr}.login-r{display:none}.login-l{padding:24px}.login h1{font-size:36px}}
+
+@media (max-width:1180px){
+  .tr{grid-template-columns:40px 62px minmax(150px,1.5fr) 100px 0 minmax(80px,.8fr) 130px 0 150px}
+  .tr > .c:nth-child(5),.tr > .c:nth-child(8){padding:0;visibility:hidden}
+  .c.x{display:none}
+}
+@media (max-width:760px){
+  .top{padding:0 14px}
+  .crumb > span,.crumb > a,.top .theme{display:none}
+  .crumb{margin-right:0}
+  .top .set-btn .lbl{display:none}
+  .top .set-btn{padding:0 8px}
+  .brand{margin-right:auto}
+  .search input,.search input:focus{width:110px;padding-right:10px}
+  .access > svg,.access .more{display:none}
+  .top{gap:6px}
+  .search kbd{display:none}
+  .top .btn.primary .lbl{display:none}
+  .page{padding:0 14px 140px}
+  .head h1{font-size:28px}
+  .sums{gap:20px}
+  .vr{display:none}
+  .tr.th{display:none}
+  .tr{grid-template-columns:34px 1fr auto;grid-template-areas:"cb v a" "cb d inv" "cb w inv";padding:12px 0;row-gap:4px}
+  .tr > .c{padding:0 6px}
+  .tr > .c:nth-child(1){grid-area:cb;align-self:start}
+  .tr > .c:nth-child(2){grid-area:d;font-size:12px}
+  .tr > .c:nth-child(3){grid-area:v}
+  .tr > .c:nth-child(4){grid-area:a;text-align:right}
+  .tr > .c:nth-child(5),.tr > .c:nth-child(6),.tr > .c:nth-child(8){display:none}
+  .tr > .c:nth-child(7){grid-area:w}
+  .tr > .c:last-child{grid-area:inv;align-self:end;text-align:right}
+  .cb{margin:2px 0 0 6px}
+  .tr .who.none span{opacity:1!important}
+}
+
+/* motion */
+@property --p{syntax:'<number>';inherits:false;initial-value:0}
+.ring{transition:--p .8s cubic-bezier(.2,.8,.2,1)}
+.strip.intro .mo{animation:pop .3s ease-out backwards}
+.stat strong.bump{animation:bump .5s ease-out}
+@keyframes bump{0%{transform:translateY(4px);opacity:.3}100%{transform:none;opacity:1}}
+.inv.busy{background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tr.leaving{animation:leave .38s cubic-bezier(.4,0,.2,1) forwards;pointer-events:none}
+@keyframes leave{to{opacity:0;transform:translateX(24px);min-height:0;height:0;padding:0;border-color:transparent}}
+.burst{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}
+.burst svg{position:absolute}
+.done-banner{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:96;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow-lg);border-radius:14px;padding:14px 20px 14px 16px;display:flex;align-items:center;gap:12px;animation:drop .5s cubic-bezier(.2,.9,.3,1.2)}
+.done-banner .leaf{width:28px;height:28px}
+.done-banner strong{display:block;font-weight:600}
+.done-banner span{color:var(--text-2);font-size:13px}
+@keyframes drop{from{transform:translate(-50%,-16px) scale(.96);opacity:0}}
+.mrow .inv{transition:background .3s,color .3s,border-color .3s}
+.mrow.hit{animation:wash 1.2s ease-out}
+.mrow.hit .inv{animation:stamp .5s cubic-bezier(.2,.9,.3,1.25)}
+.mock .floating{transition:transform .9s cubic-bezier(.5,0,.2,1),opacity .3s}
+.mock .floating.fly{opacity:0}
+.mock .ring{transition:--p .6s ease}
+
+@media (max-width:380px){.search input,.search input:focus{width:84px}.access .stack .av:nth-child(n+3){display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading invoices&#x2026;</div></div>
+<div id="layer"></div>
+<div class="dock" id="dock" aria-hidden="true"><strong>Drop invoices here to match them automatically</strong><span>Or drop a file on a row to attach it to that charge</span></div>
+<input type="file" id="fileAttach" class="sr" multiple>
+<input type="file" id="fileImport" class="sr" accept=".xlsx,.xls,.xlsm,.csv">
+<script>
+/* ================= theme: light (default), dark, or follow the computer ================= */
+const THEMES = ['light', 'dark', 'system'];
+function getTheme(){ try { const t = localStorage.getItem('oak-theme'); return THEMES.includes(t) ? t : 'light'; } catch (e) { return 'light'; } }
+function setTheme(t){ document.documentElement.dataset.theme = t; try { localStorage.setItem('oak-theme', t); } catch (e) {} }
+document.documentElement.dataset.theme = getTheme();
+
+/* ================= backend bridge ================= */
+const LIVE = typeof google !== 'undefined' && google.script && google.script.run;
+function call(name, ...args){
+  if (!LIVE) return Demo[name](...args);
+  return new Promise((res, rej) => google.script.run
+    .withSuccessHandler(res)
+    .withFailureHandler(e => rej(new Error((e && e.message) || String(e))))[name](...args));
+}
+/* Excel and PDF readers load only when needed, so a slow CDN never blocks the app. */
+const LIBS = {xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'};
+function lib(name){
+  if (name === 'xlsx' && window.XLSX) return Promise.resolve();
+  if (name === 'pdf' && window.pdfjsLib) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const sc = document.createElement('script'); sc.src = LIBS[name];
+    sc.onload = () => { if (name === 'pdf' && window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
+    sc.onerror = () => rej(new Error('Could not load the ' + (name === 'xlsx' ? 'Excel' : 'PDF') + ' reader. Check your connection and try again.'));
+    document.head.appendChild(sc);
+  });
+}
+/* Never leave people on the loading screen: show what went wrong instead. */
+function showFatal(msg){
+  if (!S.loading) return;
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading" style="text-align:center;padding:24px"><div><strong style="color:var(--text);display:block;margin-bottom:6px">Oak couldn\'t start</strong>' + esc(msg) + '<br><br><button class="btn" onclick="location.reload()">Try again</button></div></div>';
+}
+window.addEventListener('error', e => showFatal(e.message || 'Unknown error'));
+window.addEventListener('unhandledrejection', e => showFatal((e.reason && e.reason.message) || String(e.reason)));
+
+const LEAF = '<svg class="leaf" width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path class="cap" d="M5 13.5C5 8.8 9.9 5 16 5s11 3.8 11 8.5c0 .8-.7 1.5-1.5 1.5h-19C5.7 15 5 14.3 5 13.5z"/><path class="stem" d="M16 5V2.5" fill="none" stroke-width="2.2" stroke-linecap="round"/><path class="nut" d="M7.5 17h17c0 6-3.8 11.5-8.5 11.5S7.5 23 7.5 17z"/></svg>';
+const GLOGO = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+
+/* ================= state ================= */
+const FILTERS = [
+  {key:'merchant', label:'Vendor'},
+  {key:'owner', label:'Responsible', empty:'Nobody yet'},
+  {key:'currency', label:'Currency'},
+  {key:'details', label:'Type', empty:'No type'}
+];
+const S = {
+  stage:LIVE ? null : 'login', loading:true, configured:false, user:'', folder:null, sheetUrl:null, rows:[],
+  month:null, status:'missing', mine:false, q:'', sort:{key:'date', dir:-1},
+  f:{merchant:new Set(), owner:new Set(), currency:new Set(), details:new Set()},
+  sel:new Set(), busy:new Set(), cols:new Set((() => { try { return JSON.parse(localStorage.getItem('oak-cols') || '[]'); } catch (e) { return []; } })()), open:null, draft:{}, pop:null, modal:null, lastLoad:0
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= formatting ================= */
+const SYM = {'\u20aa':'\u20aa','$':'$','\u20ac':'\u20ac','\u00a3':'\u00a3'};
+function money(n, cur){
+  if (n == null || n === '' || isNaN(n)) return '';
+  const s = Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return SYM[cur] ? SYM[cur] + s : (cur ? s + ' ' + cur : s);
+}
+function fmtMonth(m){
+  if (m === 'all') return 'All months';
+  const x = /^(\d{4})-(\d{2})$/.exec(m || '');
+  if (!x) return m || 'No month';
+  return new Date(Date.UTC(+x[1], +x[2]-1, 1)).toLocaleString('en-US', {month:'long', year:'numeric', timeZone:'UTC'});
+}
+function fmtDate(d, long){
+  const x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
+  if (!x) return d || '';
+  const dt = new Date(Date.UTC(+x[1], +x[2]-1, +x[3]));
+  return dt.toLocaleDateString('en-US', long ? {weekday:'long', month:'long', day:'numeric', year:'numeric', timeZone:'UTC'} : {month:'short', day:'numeric', timeZone:'UTC'});
+}
+function fmtWhen(iso){
+  const d = new Date(iso); if (isNaN(d)) return '';
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' at ' + d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+}
+function person(v){
+  if (!v) return '';
+  if (v === 'Excel') return 'From the Excel file';
+  if (!v.includes('@')) return v;
+  return v.split('@')[0].split(/[._-]+/).filter(Boolean).map(p => p[0].toUpperCase() + p.slice(1)).join(' ');
+}
+function team(){ const t = (S.team || []).slice(); if (S.user && !t.includes(S.user)) t.unshift(S.user); return t; }
+function namesList(list){ const n = list.map(v => v === S.user ? 'you' : person(v)); return n.length < 2 ? (n[0] || '') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; }
+const HUES = ['#3E6B8A','#7A5C99','#9A5B3C','#3F7D6B','#8A6D1F','#A0475C','#55606B','#4F7A3A'];
+function avatar(v, cls='av'){
+  if (!v) return `<span class="${cls} empty">+</span>`;
+  const name = person(v); let h = 0; for (const ch of v) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const ini = name.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase();
+  return `<span class="${cls}" style="background:${HUES[h % HUES.length]}">${esc(ini)}</span>`;
+}
+const I = {
+  clip:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10.5 4.5 5.8 9.2a1.5 1.5 0 0 0 2.1 2.1l5-5a3 3 0 0 0-4.2-4.2l-5 5a4.5 4.5 0 0 0 6.4 6.4l4-4"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg>',
+  folder:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h3l1.5 1.75h5c.83 0 1.5.67 1.5 1.5v6.25c0 .83-.67 1.5-1.5 1.5h-9.5c-.83 0-1.5-.67-1.5-1.5z"/></svg>',
+  search:'<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="m10.5 10.5 3.5 3.5" stroke-linecap="round"/></svg>',
+  down:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m4 6 4 4 4-4"/></svg>',
+  up:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m4 10 4-4 4 4"/></svg>',
+  x:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+  person:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.75 14c.6-2.6 2.7-4 5.25-4s4.65 1.4 5.25 4" stroke-linecap="round"/></svg>',
+  sun:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>',
+  moon:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M13.5 9.8A5.8 5.8 0 0 1 6.2 2.5a5.8 5.8 0 1 0 7.3 7.3z"/></svg>',
+  monitor:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1.75" y="2.5" width="12.5" height="8.5" rx="1.5"/><path d="M5.5 14h5M8 11v3"/></svg>',
+  redo:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3v3.5H9.5"/><path d="M12.6 6.5A5 5 0 1 0 13 10"/></svg>',
+  lock:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',
+  plus:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
+  cols:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="M6 2.5v11M10 2.5v11"/></svg>',
+  upload:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.5V2.5M4.75 5.5 8 2.25l3.25 3.25M2.5 10.5v2a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>'
+};
+
+/* ================= data selection ================= */
+const isDone = r => r.status === 'Done';
+/* The latest "request again" note, if the charge is waiting for a better file. */
+const reRequest = r => { if (isDone(r)) return null; const n = r.notes.filter(x => x.kind === 'request').pop(); const f = r.files.filter(x => !x.rejected).length; return n && !f ? n : null; };
+function months(){
+  const m = {};
+  S.rows.forEach(r => { (m[r.month] = m[r.month] || {total:0, missing:0}); m[r.month].total++; if (!isDone(r)) m[r.month].missing++; });
+  return Object.keys(m).sort().reverse().map(k => ({key:k, ...m[k]}));
+}
+const inMonth = () => S.rows.filter(r => S.month === 'all' || r.month === S.month);
+function passFilters(r, skip){
+  if (S.mine && r.owner !== S.user) return false;
+  for (const f of FILTERS) {
+    if (f.key === skip) continue;
+    const set = S.f[f.key];
+    if (set.size && !set.has(r[f.key] || '')) return false;
+  }
+  const q = S.q.trim().toLowerCase();
+  if (q) {
+    const hay = [r.merchant, r.details, r.owner, person(r.owner), r.amount, r.charged, money(r.amount, r.currency),
+      ...r.notes.map(n => n.text), ...Object.values(r.extra || {})].join(' ').toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+function visible(){
+  const k = S.sort.key, d = S.sort.dir;
+  return inMonth()
+    .filter(r => passFilters(r))
+    .filter(r => S.status === 'all' || (S.status === 'missing') !== isDone(r))
+    .sort((a, b) => {
+      let x = a[k], y = b[k];
+      if (k === 'amount') { x = +a.charged || +a.amount || 0; y = +b.charged || +b.amount || 0; }
+      if (k === 'owner') { x = person(x); y = person(y); }
+      if (x == null) x = ''; if (y == null) y = '';
+      return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y))) * d || String(b.date).localeCompare(String(a.date));
+    });
+}
+function people(){
+  const set = new Set([S.user, ...(S.team || [])]);
+  S.rows.forEach(r => r.owner && set.add(r.owner));
+  return [...set].filter(Boolean).sort((a, b) => person(a).localeCompare(person(b)));
+}
+
+/* ================= render ================= */
+function render(){
+  const app = $('#app');
+  if (S.loading) return;
+  clearInterval(S.mockTimer);
+  if (S.denied || S.stage === 'login') { app.innerHTML = loginHtml(); startMock(); return; }
+  if (!S.configured) { app.innerHTML = setupHtml(); return; }
+  const ms = months();
+  if (!S.month || (S.month !== 'all' && !ms.some(m => m.key === S.month))) S.month = ms[0] ? ms[0].key : 'all';
+  const strip = ms.slice(0, 24).reverse();
+  const allMiss = ms.reduce((a, m) => a + m.missing, 0);
+  app.innerHTML = `
+    ${LIVE ? '' : '<div class="demo">Preview with sample data. Nothing you do here is saved.</div>'}
+    <header class="top">
+      <div class="brand">${LEAF}Oak</div>
+      <div class="crumb">${S.folder ? `<span>/</span><a ${S.folder.url ? `href="${esc(S.folder.url)}" target="_blank" rel="noopener"` : ''} title="Invoices are saved in this Drive folder">${I.folder}<span>${esc(S.folder.name)}</span></a>` : ''}
+        ${team().length ? `<button class="access" data-act="settings" title="Only ${esc(namesList(team()))} can see this" aria-label="Who has access: ${esc(namesList(team()))}">
+          <span class="stack">${team().slice(0, 4).map(v => avatar(v)).join('')}</span>${team().length > 4 ? `<span class="more">+${team().length - 4}</span>` : ''}${I.lock}</button>` : ''}</div>
+      <label class="search">${I.search}<span class="sr">Search</span><input type="search" id="q" placeholder="Search charges" value="${esc(S.q)}"><kbd>/</kbd></label>
+      <div class="theme" role="group" aria-label="Theme">${[['light', I.sun, 'Light'], ['dark', I.moon, 'Dark'], ['system', I.monitor, 'Same as computer']].map(([k, ic, l]) => `<button data-act="theme" data-v="${k}" aria-pressed="${getTheme() === k}" title="${l}" aria-label="${l}">${ic}</button>`).join('')}</div>
+      <button class="btn ghost set-btn" data-act="settings" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke-linecap="round"/></svg><span class="lbl">Settings</span></button>
+      <button class="btn primary" data-act="import">${I.upload}<span class="lbl">Import Excel</span></button>
+      <button class="me" title="${esc(S.user)}" data-act="mine-toggle" aria-label="Show charges assigned to me">${avatar(S.user)}</button>
+    </header>
+    <div class="page">
+      ${ms.length ? `<nav class="strip ${S.introDone ? '' : 'intro'}" aria-label="Months">
+        ${(() => {
+          const pill = m => `<button class="mo" data-act="month" data-v="${m.key}" aria-current="${S.month === m.key}" title="${fmtMonth(m.key)}">${fmtMonth(m.key)}${m.missing ? `<span class="badge">${m.missing}</span>` : `<span class="badge ok">${I.check}</span>`}</button>`;
+          const latest = ms[0], picked = ms.find(m => m.key === S.month && m.key !== latest.key);
+          const earlier = ms.slice(1), earlierMiss = earlier.reduce((a, m) => a + m.missing, 0);
+          return pill(latest) + (picked ? pill(picked) : '') +
+            (earlier.length ? `<button class="mo" data-act="earlier" aria-haspopup="true">Earlier${earlierMiss ? `<span class="badge">${earlierMiss}</span>` : ''}${I.down}</button>` : '') +
+            (ms.length > 1 ? `<span class="gap"></span><button class="mo" data-act="month" data-v="all" aria-current="${S.month === 'all'}">All months${allMiss ? `<span class="badge">${allMiss}</span>` : `<span class="badge ok">${I.check}</span>`}</button>` : '');
+        })()}
+      </nav>` : ''}
+      <div id="head"></div>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Status" id="seg"></div>
+        <span class="vr"></span>
+        <div class="chips" id="chips"></div>
+        <button class="btn ghost add-row" data-act="add-charge">${I.plus}Add charge</button>
+      </div>
+      <div id="list"></div>
+    </div>`;
+  renderList();
+  renderLayer();
+  S.introDone = true;
+  const cur = document.querySelector('.strip .mo[aria-current="true"]');
+  if (cur) { const st = cur.parentElement; st.scrollLeft = cur.offsetLeft - st.clientWidth / 2 + cur.offsetWidth / 2; }
+}
+function sumBy(rows){
+  const t = {};
+  rows.forEach(r => {
+    const ch = r.charged != null && r.charged !== '' && !isNaN(r.charged);
+    const cur = ch ? r.chargedCurrency || r.currency : r.currency;
+    t[cur] = (t[cur] || 0) + ((ch ? +r.charged : +r.amount) || 0);
+  });
+  return Object.entries(t).sort((a, b) => b[1] - a[1]).map(([c, v]) => money(v, c)).join(' + ');
+}
+function renderHead(){
+  const rows = inMonth();
+  const miss = rows.filter(r => !isDone(r));
+  const shown = visible();
+  const filtered = hasFilters();
+  const pct = rows.length ? Math.round((rows.length - miss.length) / rows.length * 100) : 0;
+  $('#head').innerHTML = `
+    <div class="head">
+      <div><h1>${fmtMonth(S.month)}</h1>
+        <p class="progress">${rows.length ? `<span class="ring" style="--p:${S.prevPct == null ? 0 : S.prevPct}" data-p="${pct}"></span>${miss.length ? `${miss.length} of ${rows.length} charges still need an invoice` : `All ${rows.length} charges have invoices`}` : 'No charges yet'}</p></div>
+      ${rows.length ? `<div class="sums">
+        <div class="stat"><span>Total charged</span><strong>${sumBy(rows)}</strong></div>
+        ${miss.length ? `<div class="stat"><span>Missing</span><strong class="miss">${sumBy(miss)}</strong></div>` : ''}
+        ${filtered && shown.length !== rows.length ? `<div class="stat"><span>Shown (${shown.length})</span><strong>${sumBy(shown) || '0'}</strong></div>` : ''}
+      </div>` : ''}
+    </div>`;
+  const ring = $('#head .ring');
+  if (ring) requestAnimationFrame(() => requestAnimationFrame(() => ring.style.setProperty('--p', ring.dataset.p)));
+  const key = S.month + '|' + miss.length;
+  if (S.prevHead && S.prevHead.split('|')[0] === S.month && S.prevHead !== key) document.querySelectorAll('#head .stat strong').forEach(x => x.classList.add('bump'));
+  S.prevHead = key; S.prevPct = pct;
+}
+
+function extraKeys(){
+  const set = new Set(); inMonth().forEach(r => Object.keys(r.extra || {}).forEach(k => set.add(k)));
+  return [...set];
+}
+const shownExtras = () => extraKeys().filter(k => S.cols.has(k));
+function renderList(){
+  renderHead();
+  const scope = inMonth().filter(r => passFilters(r));
+  const nMiss = scope.filter(r => !isDone(r)).length;
+  $('#seg').innerHTML = [['missing', 'Missing', nMiss], ['done', 'Done', scope.length - nMiss], ['all', 'All', scope.length]]
+    .map(([k, l, n]) => `<button data-act="status" data-v="${k}" aria-pressed="${S.status === k}">${l}<span class="n">${n}</span></button>`).join('');
+  renderChips();
+  const rows = visible();
+  const list = $('#list');
+  if (!S.rows.length) {
+    list.innerHTML = `<div class="table"><div class="empty-state"><h3>No charges yet</h3><p>Import the Excel file with this month's card charges. You can also drop it anywhere on this page.</p><button class="btn primary" data-act="import">${I.upload}Import Excel</button> <button class="btn" data-act="add-charge">${I.plus}Add a charge</button></div></div>`;
+    return;
+  }
+  const allSel = rows.length && rows.every(r => S.sel.has(r.id));
+  const sortBtn = (k, label) => `<button class="sort" data-act="sort" data-v="${k}" ${S.sort.key === k ? 'data-on' : ''}>${label}${S.sort.key === k ? (S.sort.dir < 0 ? I.down : I.up) : ''}</button>`;
+  const xs = shownExtras();
+  const grid = '40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px'.replace(/ 156px$/, xs.map(() => ' minmax(100px,1fr)').join('') + ' 156px');
+  list.innerHTML = `<div class="table" role="table" aria-label="Charges" style="--grid:${grid}">
+    <div class="tr th" role="row">
+      <div class="c" role="columnheader"><input type="checkbox" class="cb" data-act="sel-all" ${allSel ? 'checked' : ''} aria-label="Select all shown"></div>
+      <div class="c" role="columnheader">${sortBtn('date', 'Date')}</div>
+      <div class="c" role="columnheader">${sortBtn('merchant', 'Vendor')}</div>
+      <div class="c r" role="columnheader">${sortBtn('amount', 'Amount')}</div>
+      <div class="c r" role="columnheader">Charged</div>
+      <div class="c" role="columnheader">Type</div>
+      <div class="c" role="columnheader">${sortBtn('owner', 'Responsible')}</div>
+      <div class="c" role="columnheader">Note</div>
+      ${xs.map(k => `<div class="c x" role="columnheader" dir="auto">${esc(k)}</div>`).join('')}
+      <div class="c" role="columnheader">Invoice</div>
+    </div>
+    ${rows.map(rowHtml).join('') || `<div class="empty-state"><h3>${S.status === 'missing' && !hasFilters() ? 'Nothing missing here' : 'No charges match'}</h3><p>${hasFilters() ? 'Try removing a filter.' : S.status === 'missing' ? 'Every charge this month has an invoice.' : ''}</p>${hasFilters() ? '<button class="btn" data-act="clear-filters">Clear filters</button>' : ''}</div>`}
+  </div>`;
+}
+
+function rowHtml(r){
+  const done = isDone(r);
+  const last = reRequest(r) || r.notes[r.notes.length - 1];
+  const f0 = r.files.filter(f => !f.rejected)[0] || r.files[0];
+  const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>` : done
+    ? (f0 && f0.url ? `<a class="inv done" href="${esc(f0.url)}" target="_blank" rel="noopener" title="${esc(f0.name)}">${I.check}${r.files.length > 1 ? r.files.length + ' files' : 'Invoice'}</a>`
+                    : `<span class="inv done">${I.check}${f0 ? 'Invoice' : 'Done'}</span>`)
+    : reRequest(r) ? `<button class="inv again" data-act="attach" data-id="${r.id}" title="${esc(reRequest(r).text)}">${I.redo}Requested again</button>`
+    : `<button class="inv missing" data-act="attach" data-id="${r.id}">${I.clip}Attach invoice</button>`;
+  const hasCharged = r.charged != null && r.charged !== '' && !isNaN(r.charged);
+  return `<div class="tr ${done ? '' : 'is-miss'} ${S.sel.has(r.id) ? 'selected' : ''}" role="row" data-row="${r.id}">
+    <div class="c" role="cell"><input type="checkbox" class="cb" data-act="sel" data-id="${r.id}" ${S.sel.has(r.id) ? 'checked' : ''} aria-label="Select ${esc(r.merchant)}"></div>
+    <div class="c date" role="cell">${fmtDate(r.date)}</div>
+    <div class="c vendor" role="cell"><button class="open" data-act="open" data-id="${r.id}" dir="auto">${esc(r.merchant)}</button></div>
+    <div class="c r num amt" role="cell">${money(r.amount, r.currency)}</div>
+    <div class="c r num muted" role="cell">${hasCharged ? money(r.charged, r.chargedCurrency || r.currency) : ''}</div>
+    <div class="c muted" role="cell" dir="auto">${esc(r.details)}</div>
+    <div class="c" role="cell"><button class="who ${r.owner ? '' : 'none'}" data-act="assign" data-id="${r.id}">${avatar(r.owner)}<span>${r.owner ? esc(person(r.owner)) : 'Assign'}</span></button></div>
+    <div class="c note" role="cell" dir="auto" title="${last ? esc(last.text) : ''}">${last ? esc(last.text) : ''}</div>
+    ${shownExtras().map(k => `<div class="c x muted" role="cell" dir="auto">${esc((r.extra || {})[k] || '')}</div>`).join('')}
+    <div class="c" role="cell">${inv}<span class="drophint">Drop to attach</span></div>
+  </div>`;
+}
+
+const hasFilters = () => FILTERS.some(f => S.f[f.key].size) || S.mine || S.q.trim();
+function renderChips(){
+  $('#chips').innerHTML = FILTERS.map(f => {
+    const set = S.f[f.key];
+    const vals = [...set].map(v => v ? (f.key === 'owner' ? person(v) : v) : f.empty);
+    return `<button class="chip ${set.size ? 'on' : ''}" data-act="filter" data-v="${f.key}" aria-haspopup="true">${set.size
+      ? `${f.label}: <b dir="auto">${esc(vals[0])}</b>${vals.length > 1 ? ` and ${vals.length - 1} more` : ''}` : f.label}${I.down}</button>`;
+  }).join('') + (extraKeys().length ? `<button class="chip ${shownExtras().length ? 'on' : ''}" data-act="cols" aria-haspopup="true">${I.cols}Columns${shownExtras().length ? ` <b>${shownExtras().length}</b>` : ''}</button>` : '') + `<button class="toggle" data-act="mine-toggle" aria-pressed="${S.mine}">${I.person}Mine</button>` + (hasFilters() ? '<button class="clear" data-act="clear-filters">Clear</button>' : '');
+}
+
+/* ---------- layer: pane, popover, modal, selection bar ---------- */
+function renderLayer(){
+  const r = S.open && S.rows.find(x => x.id === S.open);
+  let h = '';
+  if (r) h += `<div class="scrim" data-act="close"></div>${paneHtml(r)}`;
+  if (S.sel.size) h += `<div class="selbar" role="toolbar" aria-label="Selected charges"><strong>${S.sel.size} selected <span style="opacity:.7;font-weight:400">${sumBy(S.rows.filter(r => S.sel.has(r.id)))}</span></strong>
+      <button class="btn" data-act="assign-many">${I.person}Assign</button>
+      <button class="btn" data-act="many-done">Mark done</button>
+      <button class="btn" data-act="many-missing">Mark missing</button>
+      <button class="btn" data-act="sel-clear" aria-label="Clear selection">${I.x}</button></div>`;
+  if (S.pop) h += popHtml();
+  if (S.modal) h += `<div class="modal-wrap ${S.modal.shown ? '' : 'enter'}" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true">${S.modal.html()}</div></div>`;
+  $('#layer').innerHTML = h;
+  if (S.modal) S.modal.shown = true;
+  S.paneShown = r ? r.id : null;
+  if (S.pop) placePop();
+  if (r) { const ta = $('#noteText'); if (ta) ta.value = S.draft[r.id] || ''; }
+}
+
+function paneHtml(r){
+  const done = isDone(r);
+  const hasCharged = r.charged != null && r.charged !== '' && !isNaN(r.charged);
+  const extra = Object.entries(r.extra || {}).filter(([, v]) => v !== '' && v != null);
+  return `<aside class="pane ${S.paneShown === r.id ? '' : 'enter'}" role="dialog" aria-label="${esc(r.merchant)}">
+    <div class="pane-top"><span>${fmtMonth(r.month)}</span><button class="btn ghost" data-act="close" aria-label="Close">${I.x}</button></div>
+    <h2 dir="auto">${esc(r.merchant)}</h2>
+    <p class="sub">${fmtDate(r.date, true)}</p>
+    <dl class="facts">
+      <div><dt>Amount</dt><dd class="num">${money(r.amount, r.currency)}</dd></div>
+      <div><dt>Charged to card</dt><dd class="num">${hasCharged ? money(r.charged, r.chargedCurrency || r.currency) : 'Same'}</dd></div>
+      <div><dt>Type</dt><dd dir="auto">${esc(r.details) || '<span class="muted">None</span>'}</dd></div>
+      <div><dt>Responsible</dt><dd><button class="who ${r.owner ? '' : 'none'}" data-act="assign" data-id="${r.id}" style="margin-left:-4px">${avatar(r.owner)}<span>${r.owner ? esc(person(r.owner)) : 'Assign someone'}</span></button></dd></div>
+    </dl>
+    <section>
+      <h3>Invoice <span class="pill ${done ? 'done' : 'missing'}">${done ? I.check + 'Done' : 'Missing'}</span></h3>
+      ${reRequest(r) ? `<div class="again-box"><strong>${I.redo} Requested again by ${esc(person(reRequest(r).by))}</strong><p dir="auto">${esc(reRequest(r).text)}</p></div>` : ''}
+      ${r.files.length ? `<ul class="files">${r.files.map(f => `<li class="${f.rejected ? 'rejected' : ''}"><div>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}
+        <small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
+        ${f.url ? `<button class="btn ghost" data-act="preview" data-id="${r.id}" data-file="${esc(f.id)}">Preview</button>` : ''}<button class="btn ghost danger" data-act="remove-file" data-id="${r.id}" data-file="${esc(f.id)}">Delete</button></li>`).join('')}</ul>` : ''}
+      ${previewHtml(r)}
+      <div class="dropzone" data-drop-row="${r.id}">Drop ${r.files.length ? 'another file' : 'the invoice'} here or <button data-act="attach" data-id="${r.id}">choose a file</button></div>
+      <div class="status-line">
+        <span class="muted" style="font-size:13px">${r.updatedBy ? `Last change by ${esc(person(r.updatedBy))}, ${fmtWhen(r.updatedAt)}` : ''}</span>
+        <span style="display:flex;gap:6px">${done && r.files.some(f => !f.rejected) ? `<button class="btn" data-act="again-open" data-id="${r.id}">${I.redo}Request again</button>` : ''}
+        <button class="btn" data-act="toggle-status" data-id="${r.id}">${done ? 'Mark as missing' : 'Mark done without a file'}</button></span>
+      </div>
+      ${S.againFor === r.id ? `<form class="again-form" data-form="again" data-id="${r.id}">
+        <label for="againText">What's wrong with the file?</label>
+        <div class="quick">${['This is a receipt, not an invoice', 'Wrong charge', "Can't read it", 'Missing company details'].map(q => `<button type="button" class="qchip" data-act="again-quick" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+        <textarea id="againText" dir="auto" placeholder="Tell the uploader what to send instead"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px"><button type="button" class="btn ghost" data-act="again-cancel">Cancel</button><button class="btn primary" type="submit">Request again</button></div>
+      </form>` : ''}
+    </section>
+    <section>
+      <h3>Notes</h3>
+      ${r.notes.length ? `<ol class="notes">${r.notes.map(n => `<li class="${n.kind === 'request' ? 'req-note' : ''}"><p dir="auto">${n.kind === 'request' ? '<b>Requested again:</b> ' : ''}${esc(n.text)}</p><small>${esc(person(n.by))}${n.by === 'Excel' ? '' : ', ' + fmtWhen(n.at)}</small></li>`).join('')}</ol>` : ''}
+      <form data-form="note" data-id="${r.id}">
+        <label class="sr" for="noteText">Add a note</label>
+        <textarea id="noteText" dir="auto" placeholder="Add a note for the team"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn primary" type="submit">Add note</button></div>
+      </form>
+    </section>
+    ${extra.length ? `<section><h3>From the Excel file</h3><div class="extra">${extra.map(([k, v]) => `<div><span dir="auto">${esc(k)}</span><span dir="auto">${esc(v)}</span></div>`).join('')}</div></section>` : ''}
+    <section><button class="btn ghost danger" data-act="delete-charge" data-id="${r.id}">Delete this charge</button></section>
+  </aside>`;
+}
+
+/* Inline preview of the chosen file, using Drive's own viewer (PDFs, images, Office files). */
+function previewFile(r){
+  const live = r.files.filter(f => f.url);
+  return live.find(f => f.id === (S.preview || {})[r.id]) || live.find(f => !f.rejected) || live[0] || null;
+}
+const previewUrl = f => 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/preview';
+function previewHtml(r){
+  const f = previewFile(r);
+  if (!f) return '';
+  return `<div class="preview"><div class="preview-bar"><span dir="auto">${esc(f.name)}</span><span><button class="btn ghost" data-act="preview-big" data-id="${r.id}">Expand</button><a class="btn ghost" href="${esc(f.url)}" target="_blank" rel="noopener">Open in Drive</a></span></div>
+    <iframe src="${previewUrl(f)}" title="Preview of ${esc(f.name)}" loading="lazy"></iframe></div>`;
+}
+
+/* ---------- popovers (filters, assign) ---------- */
+function popHtml(){
+  const p = S.pop;
+  if (p.type === 'filter') {
+    const f = FILTERS.find(x => x.key === p.key);
+    const counts = {};
+    inMonth().filter(r => passFilters(r, f.key)).forEach(r => { const v = r[f.key] || ''; counts[v] = (counts[v] || 0) + 1; });
+    S.f[f.key].forEach(v => { if (!(v in counts)) counts[v] = 0; });
+    const q = (p.q || '').toLowerCase();
+    const label = v => v ? (f.key === 'owner' ? person(v) : v) : f.empty;
+    const opts = Object.keys(counts).filter(v => label(v).toLowerCase().includes(q))
+      .sort((a, b) => counts[b] - counts[a] || label(a).localeCompare(label(b)));
+    return `<div class="pop" role="dialog" aria-label="Filter by ${f.label}">
+      <input type="search" data-pop-q placeholder="Search ${f.label.toLowerCase()}" value="${esc(p.q || '')}">
+      <ul class="opts">${opts.map(v => `<li><label><input type="checkbox" class="cb" data-act="fval" data-v="${esc(v)}" ${S.f[f.key].has(v) ? 'checked' : ''}>
+        <span class="v" dir="auto">${f.key === 'owner' ? avatar(v) + ' ' : ''}${esc(label(v))}</span><span class="k">${counts[v]}</span></label></li>`).join('') || '<li class="muted" style="padding:8px">No matches</li>'}</ul>
+      <div class="pop-foot"><button data-act="fonly">Select shown</button><button data-act="fclear">Clear</button></div></div>`;
+  }
+  if (p.type === 'months') {
+    return `<div class="pop" role="dialog" aria-label="Earlier months"><ul class="opts">${months().slice(1).map(m => `<li><button data-act="month" data-v="${m.key}"><span class="v">${fmtMonth(m.key)}</span>${m.missing ? `<span class="k" style="color:var(--miss);font-weight:600">${m.missing} missing</span>` : `<span class="k" style="color:var(--done)">All in</span>`}</button></li>`).join('')}</ul></div>`;
+  }
+  if (p.type === 'cols') {
+    return `<div class="pop" role="dialog" aria-label="Columns from the Excel file"><div class="hint" style="padding:6px 8px 8px;margin:0">Extra columns from your Excel file</div>
+      <ul class="opts">${extraKeys().map(k => `<li><label><input type="checkbox" class="cb" data-act="colval" data-v="${esc(k)}" ${S.cols.has(k) ? 'checked' : ''}><span class="v" dir="auto">${esc(k)}</span></label></li>`).join('')}</ul></div>`;
+  }
+  if (p.type === 'assign') {
+    const q = (p.q || '').toLowerCase();
+    const list = people().filter(v => (v + ' ' + person(v)).toLowerCase().includes(q));
+    const typed = (p.q || '').trim();
+    return `<div class="pop" role="dialog" aria-label="Assign">
+      <input type="text" data-pop-q placeholder="Name or email" value="${esc(p.q || '')}" autocomplete="off">
+      <ul class="opts">
+        ${list.map(v => `<li><button data-act="pick" data-v="${esc(v)}">${avatar(v)}<span class="v">${esc(person(v))}${v === S.user ? ' (you)' : ''}</span></button></li>`).join('')}
+        ${typed && !people().includes(typed) ? `<li><button data-act="pick" data-v="${esc(typed)}">${avatar(typed)}<span class="v">Assign to \u201c${esc(typed)}\u201d</span></button></li>` : ''}
+        <li><button data-act="pick" data-v=""><span class="av empty">\u2013</span><span class="v">Nobody</span></button></li>
+      </ul></div>`;
+  }
+  return '';
+}
+function placePop(){
+  const el = $('.pop'); const a = S.pop.anchor && document.querySelector(S.pop.anchor);
+  if (!el) return;
+  const r = a ? a.getBoundingClientRect() : {left:20, bottom:80};
+  el.style.left = Math.max(8, Math.min(r.left, innerWidth - el.offsetWidth - 8)) + 'px';
+  const top = r.bottom + 6;
+  el.style.top = (top + el.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - el.offsetHeight - 6) : top) + 'px';
+}
+function openPop(pop){ S.pop = pop; renderLayer(); const i = $('[data-pop-q]'); if (i) i.focus(); }
+function closePop(){ if (S.pop) { S.pop = null; renderLayer(); } }
+
+/* ---------- sign-in page ---------- */
+function loginHtml(){
+  const mrow = (d, m, a, done) => `<div class="mrow"><span class="d">${d}</span><span class="m" dir="auto">${m}</span><span class="a">${a}</span>${done ? `<span class="inv done">${I.check}Invoice</span>` : `<span class="inv missing">${I.clip}Attach</span>`}</div>`;
+  return `<div class="login">
+    <div class="login-l">
+      <div class="brand">${LEAF}Oak</div>
+      <div class="login-main">
+        <h1>Every card charge, matched to its invoice.</h1>
+        <p>Import the monthly card statement, see what's still missing, and drop invoices in. The whole team works from one list, and every file lands in your Google Drive.</p>
+        ${S.denied ? `<div class="notice">You're signed in as <b>${esc(S.user || 'an unknown account')}</b>, which doesn't have access to Oak. Switch to your work account in Google (top right of any Google page), then try again.</div>` : ''}
+        ${S.denied ? `<button class="gbtn" onclick="location.reload()">${GLOGO}I switched accounts, try again</button>` : `<a class="gbtn" href="#" data-act="login">${GLOGO}Continue with Google</a>`}
+        <p class="fine">Only accounts your team allows can open Oak.</p>
+      </div>
+      <p class="foot">Open source. Runs on your own Google Workspace and Drive.</p>
+    </div>
+    <div class="login-r" aria-hidden="true">
+      <div class="mock">
+        <h4>October 2026</h4>
+        <div class="progress"><span class="ring" style="--p:62"></span> <span class="mtxt">9 of 24 charges still need an invoice</span></div>
+        ${mrow('Oct 29', 'Netlify Inc.', '$19.00', false)}
+        ${mrow('Oct 27', 'Trattoria da Luca', '\u20ac86.00', false)}
+        ${mrow('Oct 25', 'Mediaworld Milano', '\u20ac59.90', true)}
+        ${mrow('Oct 24', 'Hotel Aria', '\u20ac212.00', true)}
+        ${mrow('Oct 21', 'Linear', '$19.00', false)}
+        <div class="floating"><i>PDF</i><b style="font-weight:500">netlify-oct.pdf</b></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function startMock(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const mock = $('.mock'); if (!mock) return;
+  const fl = mock.querySelector('.floating'), ring = mock.querySelector('.ring'), txt = mock.querySelector('.mtxt');
+  const names = ['netlify-oct.pdf', 'trattoria-receipt.jpg', 'linear-invoice-oct.pdf'];
+  let n = 0;
+  S.mockTimer = setInterval(() => {
+    const rows = [...mock.querySelectorAll('.mrow')];
+    const todo = rows.filter(r => r.querySelector('.inv.missing'));
+    if (!todo.length) {   // reset the demo
+      rows.forEach((r, i) => { if (i !== 2 && i !== 3) { r.classList.remove('hit'); r.querySelector('.inv').outerHTML = `<span class="inv missing">${I.clip}Attach</span>`; } });
+      ring.style.setProperty('--p', 62); txt.textContent = '9 of 24 charges still need an invoice'; n = 0; return;
+    }
+    const row = todo[0], mr = mock.getBoundingClientRect(), rr = row.getBoundingClientRect(), fr = fl.getBoundingClientRect();
+    fl.querySelector('b').textContent = names[n % names.length]; n++;
+    fl.style.transition = 'none'; fl.style.transform = 'rotate(4deg)'; fl.classList.remove('fly');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fl.style.transition = '';
+      fl.style.transform = `translate(${rr.right - fr.right - 10}px, ${rr.top - fr.top - 4}px) rotate(0deg) scale(.9)`;
+    }));
+    setTimeout(() => {
+      fl.classList.add('fly');
+      row.querySelector('.inv').outerHTML = `<span class="inv done">${I.check}Invoice</span>`;
+      row.classList.remove('hit'); void row.offsetWidth; row.classList.add('hit');
+      const left = todo.length - 1; const p = Math.round((24 - (6 + left)) / 24 * 100);
+      ring.style.setProperty('--p', Math.min(100, 62 + (3 - left) * 12));
+      txt.textContent = left ? `${6 + left} of 24 charges still need an invoice` : '6 of 24 charges still need an invoice';
+    }, 950);
+  }, 2600);
+}
+
+/* ---------- setup ---------- */
+function setupHtml(){
+  return `<div class="setup"><div class="setup-card">
+    ${LEAF}
+    <h1>Where should invoices be saved?</h1>
+    <p>Oak keeps track of card charges that still need an invoice. Paste the link to a Google Drive folder. Every uploaded invoice goes there, renamed and sorted into a folder per month. The data sheet is kept there too.</p>
+    <form data-form="folder">
+      <div class="field"><label for="folderLink">Drive folder link</label>
+      <input id="folderLink" placeholder="Paste the folder link from Google Drive" autocomplete="off" required>
+      </div>
+      <div class="field"><label for="allowText">Who can open Oak</label>
+      <input id="allowText" value="${esc(S.domain || '')}" placeholder="acme.com, partner.org, accountant@gmail.com" autocomplete="off">
+      <p class="muted" style="margin:6px 0 0;font-size:13px">Email domains or single addresses, separated by commas. Anyone else is turned away.</p></div>
+      <p class="err" id="folderErr"></p>
+      <button class="btn primary" type="submit">Start using Oak</button>
+    </form>
+    <p class="signed">Signed in as ${esc(S.user)}</p>
+  </div></div>`;
+}
+
+/* ================= actions ================= */
+function toast(msg, bad){
+  const old = $('.toast'); if (old) old.remove();
+  const t = document.createElement('div'); t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = msg;
+  t.setAttribute('role', bad ? 'alert' : 'status');
+  document.body.appendChild(t); setTimeout(() => t.remove(), bad ? 7000 : 4200);
+}
+function replaceRows(list){
+  const m = new Map(list.map(r => [r.id, r]));
+  S.rows = S.rows.map(r => m.get(r.id) || r);
+}
+async function load(){
+  const timer = setTimeout(() => showFatal('Google took too long to answer. Refresh the page. If it keeps happening, open Executions in the Apps Script editor to see the error.'), 30000);
+  try {
+    const st = await call('getState');
+    clearTimeout(timer);
+    Object.assign(S, {loading:false, denied:!!st.denied, appUrl:st.url || null, configured:st.configured, user:st.user, folder:st.folder || null, sheetUrl:st.sheetUrl || null, summary:st.summary || null, team:st.team || [], allowed:st.allowed || [], allowedLocked:!!st.allowedLocked, domain:st.domain || '', rows:st.rows || [], lastLoad:Date.now()});
+    render();
+    if (st.syncDue) bgSync();
+  } catch (e) {
+    clearTimeout(timer); showFatal(e.message);
+  }
+}
+// Tidy Drive in the background so the page never waits on it.
+function bgSync(){
+  call('syncDrive').then(r => { if (r && (r.renamed || r.moved || r.missing)) { S.rows = r.rows; render(); } }).catch(() => {});
+}
+
+let attachTarget = null;
+const actions = {
+  month: el => { S.month = el.dataset.v; S.sel.clear(); S.pop = null; render(); },
+  status: el => { S.status = el.dataset.v; renderList(); },
+  login: async () => { S.stage = null; S.loading = true; await load(); },
+  'mine-toggle': () => { S.mine = !S.mine; render(); },
+  sort: el => { const k = el.dataset.v; S.sort = {key:k, dir:S.sort.key === k ? -S.sort.dir : (k === 'date' || k === 'amount' ? -1 : 1)}; renderList(); },
+  filter: el => {
+    if (S.pop && S.pop.key === el.dataset.v) return closePop();
+    openPop({type:'filter', key:el.dataset.v, anchor:`[data-act="filter"][data-v="${el.dataset.v}"]`});
+  },
+  fval: el => { const set = S.f[S.pop.key]; el.checked ? set.add(el.dataset.v) : set.delete(el.dataset.v); renderList(); renderLayer(); },
+  theme: el => { setTheme(el.dataset.v); document.querySelectorAll('[data-act="theme"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === el.dataset.v)); },
+  earlier: () => { if (S.pop && S.pop.type === 'months') return closePop(); openPop({type:'months', anchor:'[data-act="earlier"]'}); },
+  cols: () => { if (S.pop && S.pop.type === 'cols') return closePop(); openPop({type:'cols', anchor:'[data-act="cols"]'}); },
+  colval: el => { el.checked ? S.cols.add(el.dataset.v) : S.cols.delete(el.dataset.v); try { localStorage.setItem('oak-cols', JSON.stringify([...S.cols])); } catch (e) {} renderList(); renderLayer(); },
+  fonly: () => { document.querySelectorAll('.pop [data-act="fval"]').forEach(c => S.f[S.pop.key].add(c.dataset.v)); renderList(); renderLayer(); },
+  fclear: () => { S.f[S.pop.key].clear(); renderList(); renderLayer(); },
+  'clear-filters': () => { FILTERS.forEach(f => S.f[f.key].clear()); S.mine = false; S.q = ''; S.pop = null; render(); },
+  open: el => { S.open = el.dataset.id; S.againFor = null; S.pop = null; renderLayer(); },
+  close: () => { S.open = null; renderLayer(); },
+  sel: el => { el.checked ? S.sel.add(el.dataset.id) : S.sel.delete(el.dataset.id); el.closest('.tr').classList.toggle('selected', el.checked); renderLayer(); },
+  'sel-all': el => { visible().forEach(r => el.checked ? S.sel.add(r.id) : S.sel.delete(r.id)); renderList(); renderLayer(); },
+  'sel-clear': () => { S.sel.clear(); renderList(); renderLayer(); },
+  assign: el => openPop({type:'assign', ids:[el.dataset.id], anchor:`${S.open ? '.pane ' : ''}[data-act="assign"][data-id="${el.dataset.id}"]`}),
+  'assign-many': () => openPop({type:'assign', ids:[...S.sel], anchor:'[data-act="assign-many"]'}),
+  pick: async el => {
+    const ids = S.pop.ids, v = el.dataset.v; S.pop = null;
+    await bulk(ids, 'owner', v, v ? `Assigned ${ids.length > 1 ? ids.length + ' charges' : ''} to ${person(v)}` : 'Unassigned');
+  },
+  'many-done': () => bulk([...S.sel], 'status', 'Done', `Marked ${S.sel.size} as done`),
+  'many-missing': () => bulk([...S.sel], 'status', 'Missing', `Marked ${S.sel.size} as missing`),
+  attach: el => { attachTarget = el.dataset.id; $('#fileAttach').value = ''; $('#fileAttach').click(); },
+  'toggle-status': async el => {
+    const r = S.rows.find(x => x.id === el.dataset.id);
+    const before = missingIn(r.month);
+    try { replaceRows([await call('setStatus', r.id, isDone(r) ? 'Missing' : 'Done')]); renderLayer(); settle([r.id], r.month, before); }
+    catch (e) { toast(e.message, true); }
+  },
+  'remove-file': el => confirmBox('Delete this invoice?', 'The file is moved to the Drive trash. If it was the only invoice, the charge goes back to Missing.', 'Delete invoice', async () => {
+    try { replaceRows([await call('removeFile', el.dataset.id, el.dataset.file)]); refresh(); toast('Invoice deleted'); }
+    catch (e) { toast(e.message, true); }
+  }),
+  'delete-charge': el => confirmBox('Delete this charge?', 'It disappears for everyone, and its invoices are moved to the Drive trash. Importing the Excel file again brings the charge back.', 'Delete charge', async () => {
+    try { await call('deleteCharge', el.dataset.id); S.rows = S.rows.filter(r => r.id !== el.dataset.id); S.open = null; S.sel.delete(el.dataset.id); render(); toast('Charge deleted'); }
+    catch (e) { toast(e.message, true); }
+  }),
+  import: () => { $('#fileImport').value = ''; $('#fileImport').click(); },
+  settings: () => showModal(settingsHtml),
+  sync: async el => {
+    el.disabled = true; el.textContent = 'Checking\u2026';
+    try { const r = await call('syncDrive'); S.rows = r.rows; closeModal(); render();
+      toast(r.renamed + r.moved + r.missing ? `${r.renamed} renamed, ${r.moved} moved, ${r.missing} missing from Drive` : 'The Drive folder is in order'); }
+    catch (e) { toast(e.message, true); el.disabled = false; el.textContent = 'Check the folder now'; }
+  },
+  'send-summary': async el => {
+    el.disabled = true;
+    try { const em = $('#sumEmail').value; if (em !== (S.summary || {}).email) S.summary = await call('saveSummary', em, $('#sumOn').checked);
+      const r = await call('sendMonthlySummary'); toast(`Summary sent with ${r.count} missing invoices`); }
+    catch (e) { toast(e.message, true); }
+    el.disabled = false;
+  },
+  'custom-add': () => { const imp = S.modal.imp; const used = new Set([...Object.values(imp.choice), ...imp.custom.map(c => c.header)]);
+    const heads = [...new Set(imp.sheets.filter(sh => !sh.skip).flatMap(sh => sh.header).filter(Boolean))];
+    const h = heads.find(x => !used.has(x)) || heads[0]; imp.custom.push({header:h, name:h}); renderLayer();
+    const inputs = document.querySelectorAll('[data-custom-name]'); if (inputs.length) inputs[inputs.length - 1].focus(); },
+  'custom-del': el => { S.modal.imp.custom.splice(+el.dataset.i, 1); renderLayer(); },
+  'drive-match': () => startDriveMatch(),
+  'set-tab': el => { S.setTab = el.dataset.v; renderLayer(); },
+  preview: el => { S.preview = S.preview || {}; S.preview[el.dataset.id] = el.dataset.file; renderLayer(); },
+  'preview-big': el => { const r = S.rows.find(x => x.id === el.dataset.id), f = r && previewFile(r); if (!f) return;
+    showModal(() => `<div class="big-preview"><div class="preview-bar"><span dir="auto">${esc(f.name)}</span><span><a class="btn ghost" href="${esc(f.url)}" target="_blank" rel="noopener">Open in Drive</a><button class="btn ghost" data-act="modal-close" aria-label="Close">${I.x}</button></span></div><iframe src="${previewUrl(f)}" title="Preview of ${esc(f.name)}"></iframe></div>`); },
+  'again-open': el => { S.againFor = el.dataset.id; renderLayer(); const t = $('#againText'); if (t) t.focus(); },
+  'again-cancel': () => { S.againFor = null; renderLayer(); },
+  'again-quick': el => { const t = $('#againText'); t.value = el.dataset.v; t.focus(); },
+  'sheets-all': () => { const imp = S.modal && S.modal.imp; if (!imp) return; const all = imp.sheets.every(sh => sh.skip || sh.on); imp.sheets.forEach(sh => { if (!sh.skip) sh.on = !all; }); renderLayer(); },
+  'modal-bg': (el, e) => { if (e.target === el) closeModal(); },
+  'modal-close': () => closeModal(),
+  'add-charge': () => showAddCharge(),
+  'modal-ok': () => S.modal && S.modal.ok && S.modal.ok()
+};
+async function bulk(ids, field, value, msg){
+  const month = (S.rows.find(r => r.id === ids[0]) || {}).month, before = missingIn(month);
+  if (field === 'owner') {
+    // show the change right away, save in the background, undo if the save fails
+    const prev = {}; ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) { prev[id] = r.owner; r.owner = value; } });
+    refresh(); toast(msg.replace(/\s+/g, ' '));
+    try { replaceRows(await call('updateMany', ids, field, value)); }
+    catch (e) { ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) r.owner = prev[id]; }); refresh(); toast(e.message, true); }
+    return;
+  }
+  try {
+    replaceRows(await call('updateMany', ids, field, value)); toast(msg.replace(/\s+/g, ' '));
+    if (field === 'status') { S.sel.clear(); renderLayer(); settle(ids, month, before); } else refresh();
+  }
+  catch (e) { toast(e.message, true); }
+}
+function refresh(){ renderList(); renderLayer(); }
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (S.pop && !e.target.closest('.pop') && !(el && ['filter', 'assign', 'assign-many', 'cols', 'earlier'].includes(el.dataset.act))) closePop();
+  if (el && actions[el.dataset.act]) {
+    if (el.tagName !== 'INPUT' && el.dataset.act !== 'modal-bg') e.preventDefault();
+    return actions[el.dataset.act](el, e);
+  }
+  const row = e.target.closest('.tr[data-row]');
+  if (row && !e.target.closest('a,button,input')) { S.open = row.dataset.row; renderLayer(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { S.q = e.target.value; renderList(); }
+  if (e.target.matches('[data-pop-q]')) {
+    S.pop.q = e.target.value; const pos = e.target.selectionStart;
+    renderLayer(); const i = $('[data-pop-q]'); i.focus(); i.setSelectionRange(pos, pos);
+  }
+  if (e.target.id === 'noteText' && S.open) S.draft[S.open] = e.target.value;
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.change === 'month') { S.month = e.target.value; render(); }
+  if (e.target.id === 'sumOn') e.target.form.requestSubmit();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (S.pop) closePop(); else if (S.modal) closeModal(); else if (S.open) { S.open = null; renderLayer(); } }
+  if (e.key === 'Enter' && e.target.matches('[data-pop-q]') && S.pop.type === 'assign') {
+    e.preventDefault(); const b = $('.pop [data-act="pick"]'); if (b) b.click();
+  }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'noteText') e.target.form.requestSubmit();
+  if (e.key === '/' && !e.target.matches('input,textarea,select') && $('#q')) { e.preventDefault(); $('#q').focus(); }
+});
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.dataset.form === 'note') {
+    const id = f.dataset.id, text = $('#noteText').value.trim();
+    if (!text) return;
+    try { replaceRows([await call('addNote', id, text)]); S.draft[id] = ''; refresh(); }
+    catch (err) { toast(err.message, true); }
+  }
+  if (f.dataset.form === 'again') {
+    const id = f.dataset.id, text = $('#againText').value.trim();
+    if (!text) { $('#againText').focus(); return; }
+    const r0 = S.rows.find(x => x.id === id), before = missingIn(r0.month);
+    try { replaceRows([await call('requestAgain', id, text)]); S.againFor = null; refresh(); toast('Requested again. The charge is back in Missing.'); }
+    catch (err) { toast(err.message, true); }
+  }
+  if (f.dataset.form === 'add') {
+    const v = id => f.querySelector('#' + id).value;
+    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    try {
+      const r = await call('addCharge', {date:v('addDate'), merchant:v('addVendor'), amount:v('addAmount'), currency:v('addCur'), details:v('addType'), owner:v('addOwner'), note:v('addNote')});
+      S.rows.push(r); S.month = r.month; S.status = 'missing'; closeModal(); render(); toast(`Added ${r.merchant}`);
+    } catch (err) { f.querySelector('.err').textContent = err.message; btn.disabled = false; }
+  }
+  if (f.dataset.form === 'access') {
+    try { S.allowed = await call('saveAccess', $('#accessText').value); toast('Access saved'); closeModal(); }
+    catch (err) { f.querySelector('.err').textContent = err.message; }
+  }
+  if (f.dataset.form === 'summary') {
+    try { S.summary = await call('saveSummary', $('#sumEmail').value, $('#sumOn').checked); toast(S.summary.on ? `Monthly summary goes to ${S.summary.email}` : 'Monthly summary turned off'); closeModal(); }
+    catch (err) { f.querySelector('.err').textContent = err.message; }
+  }
+  if (f.dataset.form === 'folder') {
+    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    try {
+      const at = f.querySelector('#allowText');
+      const st = await call('setup', f.querySelector('#folderLink').value, at ? at.value : null);
+      Object.assign(S, {configured:true, folder:st.folder, sheetUrl:st.sheetUrl, allowed:st.allowed || S.allowed, rows:st.rows || []});
+      S.modal = null; render(); renderLayer(); scrollTo(0, 0); toast('Folder saved');
+    } catch (err) { const p = f.querySelector('.err'); p.textContent = err.message; btn.disabled = false; }
+  }
+});
+window.addEventListener('resize', () => S.pop && placePop());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.configured && Date.now() - S.lastLoad > 60000 && !S.modal) {
+    call('getState').then(st => { S.rows = st.rows || S.rows; S.lastLoad = Date.now(); render(); }).catch(() => {});
+  }
+});
+
+/* ---------- modals ---------- */
+function showAddCharge(){
+  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const curs = [...new Set(S.rows.map(r => r.currency).filter(Boolean))];
+  const types = [...new Set(S.rows.map(r => r.details).filter(Boolean))];
+  showModal(() => `<form data-form="add">
+    <header><h2>Add a charge</h2><p>For a charge that isn't in the Excel, like a cash expense or a second card.</p></header>
+    <div class="body">
+      <div class="field"><label for="addVendor">Vendor</label><input id="addVendor" autocomplete="off" required dir="auto"></div>
+      <div class="two">
+        <div class="field"><label for="addDate">Date</label><input id="addDate" type="date" value="${today}" required></div>
+        <div class="field"><label for="addAmount">Amount</label><input id="addAmount" type="number" step="0.01" min="0.01" inputmode="decimal" required></div>
+        <div class="field"><label for="addCur">Currency</label><input id="addCur" list="addCurs" value="${esc(curs[0] || '')}" autocomplete="off"><datalist id="addCurs">${curs.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
+        <div class="field"><label for="addType">Type <span class="opt">(optional)</span></label><input id="addType" list="addTypes" autocomplete="off" dir="auto"><datalist id="addTypes">${types.map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
+      </div>
+      <div class="field"><label for="addOwner">Responsible <span class="opt">(optional)</span></label><select id="addOwner"><option value="">Nobody yet</option>${team().map(p => `<option value="${esc(p)}">${esc(person(p))}</option>`).join('')}</select></div>
+      <div class="field"><label for="addNote">Note <span class="opt">(optional)</span></label><input id="addNote" autocomplete="off" dir="auto"></div>
+      <p class="err" role="alert"></p>
+    </div>
+    <footer><button type="button" class="btn" data-act="modal-close">Cancel</button><button class="btn primary" type="submit">Add charge</button></footer>
+  </form>`);
+  const vEl = $('#addVendor'); if (vEl) vEl.focus();
+}
+function showModal(html, ok){ S.modal = {html, ok}; S.pop = null; renderLayer(); const f = $('.modal input, .modal select, .modal button'); if (f) f.focus(); }
+function closeModal(){ S.modal = null; renderLayer(); }
+function confirmBox(title, text, cta, fn){
+  showModal(() => `<header><h2>${esc(title)}</h2><p>${esc(text)}</p></header><footer><button class="btn" data-act="modal-close">Cancel</button><button class="btn primary" data-act="modal-ok" style="background:#8E2417;border-color:#8E2417">${esc(cta)}</button></footer>`,
+    () => { closeModal(); fn(); });
+}
+function settingsHtml(){
+  const sum = S.summary || {};
+  const tab = S.setTab || 'general';
+  const themeSwitch = `<div class="theme" role="group" aria-label="Theme">${[['light', I.sun, 'Light'], ['dark', I.moon, 'Dark'], ['system', I.monitor, 'Same as computer']].map(([k, ic, l]) => `<button type="button" data-act="theme" data-v="${k}" aria-pressed="${getTheme() === k}" title="${l}" aria-label="${l}">${ic}</button>`).join('')}</div>`;
+  return `<header class="set-head"><h2>Settings</h2><button class="btn ghost" data-act="modal-close" aria-label="Close">${I.x}</button></header>
+  <nav class="set-tabs" role="tablist">${[['general', 'General'], ['access', 'Access'], ['drive', 'Drive'], ['summary', 'Summary']].map(([k, l]) => `<button role="tab" data-act="set-tab" data-v="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</nav>
+  <div class="body set">
+    <section class="set-group" data-tab="general" ${tab === 'general' ? '' : 'hidden'}><h3>Appearance</h3><div class="set-box">
+      <div class="set-row"><div><b>Theme</b><p>Light, dark, or the same as your computer.</p></div>${themeSwitch}</div>
+    </div></section>
+
+    <section class="set-group" data-tab="access" ${tab === 'access' ? '' : 'hidden'}><h3>Who can see Oak</h3><div class="set-box">
+      <div class="set-row stack"><div><b>People with access</b><p>Only these people can see Oak and its invoices. To change it, change who the Drive folder is shared with.</p></div>
+        <ul class="people">${team().map(v => `<li>${avatar(v)}<span><b>${esc(person(v))}${v === S.user ? ' (you)' : ''}</b><small>${esc(v)}</small></span></li>`).join('') || '<li class="muted">Only you</li>'}</ul></div>
+      <form class="set-row stack" data-form="access"><div><b>Allowed accounts</b><p>A second safety check: only these domains or addresses can sign in at all.</p></div>
+        <div class="inline"><input id="accessText" value="${esc((S.allowed || []).join(', '))}" ${S.allowedLocked ? 'disabled' : ''} aria-label="Who can open Oak">${S.allowedLocked ? '' : '<button class="btn" type="submit">Save</button>'}</div>
+        <p class="err">${S.allowedLocked ? 'Set in Code.gs, so it can only be changed there.' : ''}</p></form>
+    </div></section>
+
+    <section class="set-group" data-tab="drive" ${tab === 'drive' ? '' : 'hidden'}><h3>Google Drive</h3><div class="set-box">
+      <div class="set-row"><div><b>Folder</b><p>Invoices are saved in <strong>${esc(S.folder ? S.folder.name : '')}</strong>, renamed and sorted into a folder per month.</p></div>${S.folder && S.folder.url ? `<a class="btn" href="${esc(S.folder.url)}" target="_blank" rel="noopener">Open</a>` : ''}</div>
+      <form class="set-row stack" data-form="folder"><div><b>Move to another folder</b><p>Paste the link of a Drive folder. Existing invoices stay where they are.</p></div>
+        <div class="inline"><input id="folderLink" placeholder="Paste the folder link from Google Drive" autocomplete="off" required aria-label="Drive folder link"><button class="btn" type="submit">Move</button></div><p class="err"></p></form>
+      <div class="set-row"><div><b>Tidy up</b><p>Fixes file names, moves misplaced files and notices deleted ones. Runs on its own every 15 minutes.</p></div><button class="btn" data-act="sync">Check now</button></div>
+      <div class="set-row"><div><b>Files already in the folder</b><p>Match files that aren't attached yet to their charges.</p></div><button class="btn" data-act="drive-match">Match files</button></div>
+      ${S.sheetUrl ? `<div class="set-row"><div><b>Data sheet</b><p>Every charge, plus a log of who did what.</p></div><a class="btn" href="${esc(S.sheetUrl)}" target="_blank" rel="noopener">Open sheet</a></div>` : ''}
+    </div></section>
+
+    <section class="set-group" data-tab="summary" ${tab === 'summary' ? '' : 'hidden'}><h3>Monthly summary</h3><div class="set-box">
+      <form data-form="summary">
+        <div class="set-row"><div><b>Email a summary on the 1st</b><p>What's still missing, with totals and who's responsible. Sent at 09:00.</p></div>
+          <label class="switch"><input type="checkbox" id="sumOn" ${sum.on ? 'checked' : ''} aria-label="Send a monthly summary"><span></span></label></div>
+        <div class="set-row stack"><div><b>Send to</b></div>
+          <div class="inline"><input id="sumEmail" type="email" placeholder="finance@company.com" value="${esc(sum.email || '')}" aria-label="Summary email"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="send-summary">Send one now</button></div>
+          <p class="err"></p></div>
+      </form>
+    </div></section>
+  </div>`;
+}
+
+/* ================= uploads ================= */
+const MAX = 25 * 1024 * 1024;
+function readB64(file){
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(file); });
+}
+async function attach(rowId, files){
+  files = [...files];
+  const month = (S.rows.find(r => r.id === rowId) || {}).month;
+  const before = missingIn(month);
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > MAX) { toast(`${file.name} is larger than 25 MB. Compress it and try again.`, true); continue; }
+    S.busy.add(rowId); refresh();
+    try {
+      const row = await call('uploadInvoice', rowId, {name:file.name, type:file.type, data:await readB64(file)});
+      S.busy.delete(rowId);
+      replaceRows([row]);
+      if (i === files.length - 1) toast(`Invoice saved for ${row.merchant}`);
+    } catch (e) { S.busy.delete(rowId); refresh(); toast(`${file.name}: ${e.message}`, true); return; }
+  }
+  settle([rowId], month, before);
+}
+function missingIn(month){ return S.rows.filter(r => r.month === month && !isDone(r)).length; }
+/* Show the change on the rows first (stamp, then slide out of the Missing list), then re-render. */
+function settle(ids, month, before){
+  const leaving = [];
+  ids.forEach(id => {
+    const r = S.rows.find(x => x.id === id), tr = document.querySelector(`.tr[data-row="${id}"]`);
+    if (!r || !tr) return;
+    const cell = tr.querySelector('.c:last-child');
+    if (isDone(r)) {
+      cell.innerHTML = `<span class="inv done">${I.check}${r.files.length ? 'Invoice' : 'Done'}</span>`;
+      tr.classList.remove('is-miss'); tr.classList.add('just-done');
+      if (S.status === 'missing') leaving.push(tr);
+    } else if (S.status === 'done') leaving.push(tr);
+  });
+  const after = missingIn(month);
+  const finish = () => { refresh(); if (before > 0 && after === 0) celebrate(month); };
+  if (!leaving.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return setTimeout(finish, leaving.length ? 0 : 50);
+  setTimeout(() => { leaving.forEach(tr => tr.classList.add('leaving')); setTimeout(finish, 380); }, 650);
+}
+function celebrate(month){
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const box = document.createElement('div'); box.className = 'burst'; document.body.appendChild(box);
+    for (let i = 0; i < 28; i++) {
+      const el = document.createElement('div'); el.innerHTML = LEAF; const svg = el.firstChild;
+      const size = 12 + Math.random() * 14; svg.setAttribute('width', size); svg.setAttribute('height', size);
+      svg.style.left = (40 + Math.random() * 20) + '%'; svg.style.top = '96px'; box.appendChild(svg);
+      const dx = (Math.random() - .5) * innerWidth * .7, dy = 180 + Math.random() * innerHeight * .6, rot = (Math.random() - .5) * 720;
+      svg.animate([{transform:'translate(0,0) rotate(0)', opacity:0}, {opacity:1, offset:.1}, {transform:`translate(${dx}px,${dy}px) rotate(${rot}deg)`, opacity:0}],
+        {duration:1600 + Math.random() * 900, easing:'cubic-bezier(.2,.6,.3,1)', delay:Math.random() * 120, fill:'forwards'});
+    }
+    setTimeout(() => box.remove(), 2800);
+  }
+  const b = document.createElement('div'); b.className = 'done-banner'; b.setAttribute('role', 'status');
+  b.innerHTML = `${LEAF}<div><strong>${fmtMonth(month)} is all in</strong><span>Every charge has its invoice.</span></div>`;
+  document.body.appendChild(b); setTimeout(() => b.animate([{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'}).onfinish = () => b.remove(), 3200);
+}
+$('#fileAttach').addEventListener('change', e => { if (attachTarget && e.target.files.length) attach(attachTarget, e.target.files); });
+$('#fileImport').addEventListener('change', e => { if (e.target.files[0]) startImport(e.target.files[0]); });
+
+/* ---------- drag and drop ---------- */
+let depth = 0;
+const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+const isSheet = f => /\.(xlsx|xls|xlsm|csv)$/i.test(f.name);
+function clearDrop(){ depth = 0; document.body.classList.remove('dragging'); $('#dock').classList.remove('over');
+  document.querySelectorAll('.drop-target,.dropzone.over').forEach(x => x.classList.remove('drop-target', 'over')); }
+document.addEventListener('dragenter', e => { if (!hasFiles(e) || !S.configured) return; depth++; document.body.classList.add('dragging'); });
+document.addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--depth <= 0) clearDrop(); });
+document.addEventListener('dragover', e => {
+  if (!hasFiles(e)) return; e.preventDefault();
+  const row = e.target.closest('.tr[data-row]'), zone = e.target.closest('[data-drop-row]'), dock = e.target.closest('#dock');
+  document.querySelectorAll('.drop-target').forEach(x => x !== row && x.classList.remove('drop-target'));
+  document.querySelectorAll('.dropzone.over').forEach(x => x !== zone && x.classList.remove('over'));
+  if (row) row.classList.add('drop-target');
+  if (zone) zone.classList.add('over');
+  $('#dock').classList.toggle('over', !!dock);
+});
+document.addEventListener('drop', e => {
+  if (!hasFiles(e)) return; e.preventDefault();
+  const files = [...e.dataTransfer.files];
+  const row = e.target.closest('.tr[data-row]'), zone = e.target.closest('[data-drop-row]');
+  clearDrop();
+  if (!S.configured || !files.length) return;
+  const sheets = files.filter(isSheet), docs = files.filter(f => !isSheet(f));
+  if (sheets.length && !row && !zone) startImport(sheets[0]);
+  if (!docs.length) return;
+  if (zone) return attach(zone.dataset.dropRow, docs);
+  if (row) return attach(row.dataset.row, docs);
+  startMatch(docs);
+});
+
+/* ================= Excel import ================= */
+const FIELDS = [
+  {k:'date', label:'Date', re:/\u05ea\u05d0\u05e8\u05d9\u05da|date/i},
+  {k:'merchant', label:'Vendor', re:/\u05d1\u05d9\u05ea\s*\u05d4?\u05e2\u05e1\u05e7|\u05e9\u05dd\s*\u05d4?\u05e1\u05e4\u05e7|\u05e1\u05e4\u05e7|merchant|vendor|payee|business|description/i},
+  {k:'charged', label:'Charged amount', re:/\u05e1\u05db\u05d5\u05dd\s*(\u05d4?\u05d7\u05d9\u05d5\u05d1)|charged|billed|debit/i},
+  {k:'amount', label:'Amount', re:/\u05e1\u05db\u05d5\u05dd|amount|total|sum/i},
+  {k:'chargedCurrency', label:'Charged currency', re:/\u05de\u05d8\u05d1\u05e2\s*(\u05d4?\u05d7\u05d9\u05d5\u05d1)|billing currency|charged currency/i},
+  {k:'currency', label:'Currency', re:/\u05de\u05d8\u05d1\u05e2|currency|curr\b/i},
+  {k:'details', label:'Type', re:/\u05e4\u05d9\u05e8\u05d5\u05d8|\u05e1\u05d5\u05d2|\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4|details|category|type/i},
+  {k:'status', label:'Status', re:/status|\u05e1\u05d8\u05d8\u05d5\u05e1|\u05de\u05e6\u05d1/i},
+  {k:'owner', label:'Responsible', re:/\u05d0\u05d7\u05e8\u05d0\u05d9|responsible|owner|assignee/i},
+  {k:'note', label:'Note', re:/\u05d4\u05e2\u05e8\u05d4|\u05d4\u05e2\u05e8\u05d5\u05ea|note|remark|comment/i}
+];
+const DONE_RE = /^\s*(ok|done|v|\u2713|\u2714|yes|\u05db\u05df|\u05d4\u05ea\u05e7\u05d1\u05dc|\u05d9\u05e9)\s*$/i;
+const MISS_RE = /^\s*(missing|\u05d7\u05e1\u05e8|no|\u05dc\u05d0)\s*$/i;
+const pad = n => String(n).padStart(2, '0');
+function num(v){
+  if (typeof v === 'number') return v;
+  if (v == null) return null;
+  let s = String(v).replace(/[^\d.,\-]/g, '');
+  if (!s) return null;
+  if (/,\d{2}$/.test(s) && !/\.\d{2}$/.test(s)) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, '');
+  const n = parseFloat(s); return isNaN(n) ? null : n;
+}
+function normCur(v){
+  const s = String(v || '').trim(); if (!s) return '';
+  if (/\u20aa|\u05e9"?\u05d7|ils|nis|\u05e9\u05e7\u05dc/i.test(s)) return '\u20aa';
+  if (/\$|usd|\u05d3\u05d5\u05dc\u05e8/i.test(s)) return '$';
+  if (/\u20ac|eur|\u05d9\u05d5\u05e8\u05d5/i.test(s)) return '\u20ac';
+  if (/\u00a3|gbp/i.test(s)) return '\u00a3';
+  return s.toUpperCase();
+}
+function parseDate(v, sm){
+  if (v instanceof Date && !isNaN(v)) { const d = new Date(v.getTime() + 12 * 3600e3); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const p = XLSX.SSF.parse_date_code(v); return `${p.y}-${pad(p.m)}-${pad(p.d)}`; }
+  const s = String(v || '').trim(); if (!s) return '';
+  const parts = s.split(/[\/.\-\s]+/).map(x => parseInt(x, 10));
+  if (parts.length < 2 || parts.some(isNaN)) return '';
+  let y, m, d;
+  if (String(s.split(/[\/.\-\s]+/)[0]).length === 4) [y, m, d] = parts;
+  else {
+    const [a, b, c] = parts; y = c == null ? (sm ? +sm[1] : new Date().getFullYear()) : (c < 100 ? 2000 + c : c);
+    const want = sm ? +sm[2] : null;
+    if (want && a === want && b !== want) { m = a; d = b; }
+    else if (want && b === want && a !== want) { m = b; d = a; }
+    else if (a > 12) { d = a; m = b; } else if (b > 12) { m = a; d = b; }
+    else if (s.includes('-')) { m = a; d = b; } else { d = a; m = b; }
+  }
+  if (!m || !d || m > 12 || d > 31) return '';
+  return `${y}-${pad(m)}-${pad(d)}`;
+}
+function findHeader(aoa){
+  let best = -1, bestScore = 0;
+  for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+    const score = FIELDS.filter(f => aoa[i].some(c => typeof c === 'string' && f.re.test(c))).length;
+    if (score > bestScore) { best = i; bestScore = score; }
+  }
+  return bestScore >= 2 ? best : -1;
+}
+function autoMap(header){
+  const map = {};
+  FIELDS.forEach(f => {
+    const idx = header.findIndex((c, i) => typeof c === 'string' && c.trim() && f.re.test(c) && !Object.values(map).includes(i));
+    if (idx >= 0) map[f.k] = idx;
+  });
+  return map;
+}
+/* When headers are missing or unclear, guess columns from what's inside them. */
+function inferByContent(aoa, start, map){
+  const rows = aoa.slice(start, start + 60).filter(r => r.some(v => v !== '' && v != null));
+  if (!rows.length) return map;
+  const width = Math.max(...rows.map(r => r.length));
+  const taken = new Set(Object.values(map));
+  const ratio = test => [...Array(width).keys()].map(ci => {
+    const vals = rows.map(r => r[ci]).filter(v => v !== '' && v != null);
+    return vals.length ? vals.filter(test).length / rows.length : 0;
+  });
+  const pick = (k, scores, min) => {
+    if (map[k] != null) return;
+    let bi = -1, bs = min;
+    scores.forEach((s, i) => { if (!taken.has(i) && s > bs) { bi = i; bs = s; } });
+    if (bi >= 0) { map[k] = bi; taken.add(bi); }
+  };
+  const isDate = v => v instanceof Date || (typeof v === 'number' && v > 30000 && v < 60000) || (typeof v === 'string' && /^\s*\d{1,4}[\/.\-]\d{1,2}([\/.\-]\d{2,4})?\s*$/.test(v));
+  const isCur = v => typeof v === 'string' && /^\s*(\u20aa|\$|\u20ac|\u00a3|[A-Z]{3}|\u05e9"?\u05d7|ILS|NIS|USD|EUR)\s*$/i.test(v);
+  const isNum = v => typeof v === 'number' || (typeof v === 'string' && /^\s*[-\u20aa$\u20ac\u00a3]?\s*[\d,]+(\.\d+)?\s*$/.test(v));
+  const isText = v => typeof v === 'string' && v.trim().length > 2 && !isDate(v) && !isNum(v) && !isCur(v) && !DONE_RE.test(v) && !MISS_RE.test(v);
+  pick('date', ratio(isDate), .5);
+  pick('currency', ratio(isCur), .5);
+  // first numeric column is the amount, a second one is the charged amount
+  const nums = ratio(v => isNum(v) && !isDate(v));
+  pick('amount', nums, .5);
+  pick('charged', nums, .5);
+  const statusCol = ratio(v => typeof v === 'string' && (DONE_RE.test(v) || MISS_RE.test(v)));
+  pick('status', statusCol, .3);
+  // the vendor is the text column with the most distinct values
+  const distinct = [...Array(width).keys()].map(ci => new Set(rows.map(r => r[ci]).filter(isText)).size / rows.length);
+  pick('merchant', distinct, .3);
+  return map;
+}
+const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+  '\u05d9\u05e0\u05d5\u05d0\u05e8':1,'\u05e4\u05d1\u05e8\u05d5\u05d0\u05e8':2,'\u05de\u05e8\u05e5':3,'\u05de\u05e8\u05e1':3,'\u05d0\u05e4\u05e8\u05d9\u05dc':4,'\u05de\u05d0\u05d9':5,'\u05d9\u05d5\u05e0\u05d9':6,'\u05d9\u05d5\u05dc\u05d9':7,'\u05d0\u05d5\u05d2\u05d5\u05e1\u05d8':8,'\u05e1\u05e4\u05d8\u05de\u05d1\u05e8':9,'\u05d0\u05d5\u05e7\u05d8\u05d5\u05d1\u05e8':10,'\u05e0\u05d5\u05d1\u05de\u05d1\u05e8':11,'\u05d3\u05e6\u05de\u05d1\u05e8':12};
+/* "2026-10", "10.2026", "Oct 26", "October 2026", "\u05d0\u05d5\u05e7\u05d8\u05d5\u05d1\u05e8 2026" \u2192 ["2026","10"] or null */
+function sheetMonth(name){
+  const s = String(name).trim().toLowerCase();
+  let m = /(\d{4})[\s_\-.\/]+(\d{1,2})(?!\d)/.exec(s); if (m && +m[2] <= 12) return [m[1], pad(m[2])];
+  m = /(?<!\d)(\d{1,2})[\s_\-.\/]+(\d{4})/.exec(s); if (m && +m[1] <= 12) return [m[2], pad(m[1])];
+  for (const [k, v] of Object.entries(MONTHS)) {
+    if (new RegExp('(^|[^a-z\u0590-\u05ff])' + k).test(s)) {
+      const y = /(\d{4})/.exec(s) || /(?:'|\u2019|\s|-)(\d{2})(?!\d)/.exec(s);
+      return [y ? (y[1].length === 2 ? '20' + y[1] : y[1]) : String(new Date().getFullYear()), pad(v)];
+    }
+  }
+  return null;
+}
+async function startImport(file){
+  let wb;
+  try { await lib('xlsx'); } catch (e) { return toast(e.message, true); }
+  try { wb = XLSX.read(await file.arrayBuffer(), {type:'array', cellDates:true}); }
+  catch (e) { return toast("Couldn't read that file. Save it as .xlsx or .csv and try again.", true); }
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('oak-map') || '{}'); } catch (e) { return {}; } })();
+  const sheets = wb.SheetNames.map(name => {
+    const ws = wb.Sheets[name];
+    if (!ws || !ws['!ref']) return {name, skip:'Empty'};
+    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+    const h = findHeader(aoa);
+    const header = h >= 0 ? aoa[h].map(c => String(c).trim()) : [];
+    const auto = inferByContent(aoa, h + 1, h >= 0 ? autoMap(header) : {});
+    const sm = sheetMonth(name);
+    return {name, aoa, h, header, auto, sm, on:true};
+  });
+  // a sheet counts if a vendor and an amount can be found in it
+  sheets.forEach(sh => { if (!sh.skip && (sh.auto.merchant == null || sh.auto.amount == null)) sh.skip = 'No charges found'; });
+  // count what each sheet would give with its own detected columns; empty or summary-only sheets are skipped
+  sheets.forEach(sh => { if (sh.skip) return; sh.count = buildImport({sheets:[{...sh, on:true}], choice:{}}).rows.length; if (!sh.count) sh.skip = 'No charges found'; });
+  // turn off summary-looking sheets when the workbook has monthly sheets
+  const monthly = sheets.filter(sh => !sh.skip && sh.sm);
+  if (monthly.length >= 2) sheets.forEach(sh => { if (!sh.skip && !sh.sm) sh.on = false; });
+  if (!sheets.some(sh => !sh.skip)) return toast("Couldn't find charges in that file. It needs at least a vendor and an amount column.", true);
+
+  const heads = [...new Set(sheets.filter(sh => !sh.skip).flatMap(sh => sh.header).filter(Boolean))];
+  const first = sheets.filter(sh => !sh.skip).sort((a, b) => b.count - a.count)[0];
+  const choice = {};
+  FIELDS.forEach(f => {
+    const fromSaved = saved[f.k] && heads.includes(saved[f.k]) ? saved[f.k] : null;
+    choice[f.k] = fromSaved || (first.auto[f.k] != null && first.header[first.auto[f.k]] ? first.header[first.auto[f.k]] : '');
+  });
+  const custom = (saved.__custom || []).filter(c => heads.includes(c.header));
+  const imp = {file, sheets, choice, custom};
+  const html = () => {
+    const res = buildImport(imp);
+    const nMonths = Object.keys(res.months).length;
+    return `<header><h2>Import ${esc(file.name)}</h2><p>${res.rows.length} charges in ${nMonths} ${nMonths === 1 ? 'month' : 'months'}. Charges already in Oak keep their status, notes, invoices and responsible person. Only new ones are added.</p></header>
+      <div class="body">
+        ${sheets.length > 1 ? `<div class="sheets-head"><h3>Sheets</h3><button class="clear" data-act="sheets-all">${sheets.every(sh => sh.skip || sh.on) ? 'Select none' : 'Select all'}</button></div>
+        <div class="sheets">${sheets.map((sh, i) => {
+          const isMonthName = sh.sm && /^\s*\d{4}-\d{1,2}\s*$/.test(sh.name);
+          const title = sh.sm ? fmtMonth(sh.sm.join('-')) : sh.name;
+          const sub = sh.sm && !isMonthName ? sh.name : (sh.sm ? '' : 'No month in the name, dates are used');
+          return `<label class="sheetrow ${sh.skip ? 'off' : ''}">
+            <input type="checkbox" class="cb" data-sheet="${i}" ${sh.on && !sh.skip ? 'checked' : ''} ${sh.skip ? 'disabled' : ''}>
+            <span class="nm"><span dir="auto">${esc(title)}</span>${sub ? `<small dir="auto">${esc(sub)}</small>` : ''}</span>
+            <span class="ct">${sh.skip ? sh.skip : `${res.perSheet[i] || 0} charges`}</span></label>`; }).join('')}</div>` :
+        `<div class="sheets">${Object.entries(res.months).sort().reverse().map(([m, n]) => `<div class="sheetrow plain"><span class="nm">${fmtMonth(m)}</span><span class="ct">${n} charges</span></div>`).join('')}</div>`}
+        <h3 style="font-size:13px;font-weight:600;margin:22px 0 4px">Columns</h3>
+        <p class="hint" style="margin:0 0 10px">Matched automatically. Fix any that look wrong. Use Add a column to bring in anything else from the file, like project, card or cost center. It shows up in the table.</p>
+        <div class="maps">${FIELDS.map(f => `<div class="maprow"><label for="map-${f.k}">${f.label}${f.k === 'merchant' || f.k === 'amount' ? ' <span class="req">*</span>' : ''}</label><select id="map-${f.k}" data-map="${f.k}">
+          <option value="">${heads.length ? 'Not in this file' : 'Detected automatically'}</option>${heads.map(hd => `<option value="${esc(hd)}" ${choice[f.k] === hd ? 'selected' : ''} dir="auto">${esc(hd)}</option>`).join('')}</select></div>`).join('')}</div>
+        ${custom.map((c, i) => `<div class="custom-row">
+          <select data-custom="${i}" aria-label="Column from the file">${heads.map(hd => `<option value="${esc(hd)}" ${c.header === hd ? 'selected' : ''} dir="auto">${esc(hd)}</option>`).join('')}</select>
+          <input data-custom-name="${i}" value="${esc(c.name)}" placeholder="Name in Oak" dir="auto" aria-label="Column name in Oak">
+          <button class="btn ghost" data-act="custom-del" data-i="${i}" aria-label="Remove column">${I.x}</button></div>`).join('')}
+        ${heads.length ? `<button class="add-col" data-act="custom-add">${I.plus}Add a column</button>` : ''}
+        ${res.preview.length ? `<h3 style="font-size:13px;font-weight:600;margin:18px 0 6px">Preview</h3>
+        <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px">${res.preview.map(r => `<div class="mrow" style="padding:8px 12px;border-top:0;border-bottom:1px solid var(--line)"><span class="d">${fmtDate(r.date) || '\u2014'}</span><span class="m" dir="auto">${esc(r.merchant)}</span><span class="a">${money(r.amount, r.currency)}</span><span class="pill ${r.status === 'Done' ? 'done' : 'missing'}">${r.status === 'Done' ? 'Done' : 'Missing'}</span></div>`).join('')}</div>` : ''}
+        ${res.missingCore ? `<p class="err">Pick the Vendor and Amount columns to continue.</p>` : ''}
+      </div>
+      <footer><button class="btn" data-act="modal-close">Cancel</button><button class="btn primary" data-act="modal-ok" ${res.missingCore || !res.rows.length ? 'disabled' : ''}>Import ${res.rows.length} charges</button></footer>`;
+  };
+  showModal(html, async () => {
+    const res = buildImport(imp); const btn = $('.modal [data-act="modal-ok"]'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Importing';
+    try { localStorage.setItem('oak-map', JSON.stringify({...choice, __custom:custom})); } catch (e) {}
+    custom.forEach(c => S.cols.add((c.name || c.header).trim()));
+    try { localStorage.setItem('oak-cols', JSON.stringify([...S.cols])); } catch (e) {}
+    try {
+      const out = await call('importRows', res.rows);
+      S.rows = out.rows; closeModal(); S.introDone = false;
+      const latest = Object.keys(res.months).sort().reverse()[0]; if (latest) S.month = latest;
+      render(); toast(`${out.added} new ${out.added === 1 ? 'charge' : 'charges'} added${out.updated ? `, ${out.updated} updated` : ''}. Existing progress was kept.`);
+    } catch (e) { toast(e.message, true); btn.disabled = false; btn.textContent = `Import ${res.rows.length} charges`; }
+  });
+  S.modal.imp = imp;
+  document.getElementById('layer').oninput = e => {
+    if (e.target.dataset.customName != null) custom[+e.target.dataset.customName].name = e.target.value;
+  };
+  document.getElementById('layer').onchange = e => {
+    if (e.target.dataset.custom != null) { const c = custom[+e.target.dataset.custom]; if (!c.name || c.name === c.header) c.name = e.target.value; c.header = e.target.value; renderLayer(); }
+    if (e.target.dataset.map) { choice[e.target.dataset.map] = e.target.value; renderLayer(); }
+    if (e.target.dataset.sheet != null) { sheets[+e.target.dataset.sheet].on = e.target.checked; renderLayer(); }
+  };
+}
+function buildImport({sheets, choice, custom = []}){
+  const rename = {}; custom.forEach(c => { if (c.header) rename[c.header] = (c.name || c.header).trim(); });
+  const rows = [], months = {}, perSheet = {};
+  sheets.forEach((sh, si) => {
+    if (sh.skip || !sh.on) return;
+    // start from what was detected in this sheet, then apply the columns picked in the dialog by header name
+    const idx = {...sh.auto};
+    FIELDS.forEach(f => { if (choice[f.k]) { const i = sh.header.indexOf(choice[f.k]); if (i >= 0) idx[f.k] = i; } });
+    if (idx.merchant == null || idx.amount == null) return;
+    const used = new Set(Object.values(idx));
+    const sm = sh.sm ? [null, sh.sm[0], sh.sm[1]] : null;
+    const seen = {};
+    for (let i = sh.h + 1; i < sh.aoa.length; i++) {
+      const r = sh.aoa[i];
+      const merchant = String(r[idx.merchant] == null ? '' : r[idx.merchant]).trim();
+      const amount = num(r[idx.amount]);
+      if (!merchant || amount == null || /^(\u05e1\u05d4"?\u05db|total|subtotal|\u05e1\u05d9\u05db\u05d5\u05dd|\u05d9\u05ea\u05e8\u05d4|balance)/i.test(merchant)) continue;
+      const date = idx.date != null ? parseDate(r[idx.date], sm) : '';
+      const month = sm ? `${sm[1]}-${sm[2]}` : (date ? date.slice(0, 7) : 'No month');
+      const currency = idx.currency != null ? normCur(r[idx.currency]) : '';
+      const charged = idx.charged != null ? num(r[idx.charged]) : null;
+      let status = 'Missing'; const notes = []; const extra = {};
+      if (idx.status != null && DONE_RE.test(String(r[idx.status]))) status = 'Done';
+      if (idx.note != null && String(r[idx.note]).trim()) notes.push(String(r[idx.note]).trim());
+      r.forEach((v, ci) => {
+        if (used.has(ci) && ci !== idx.status) return;
+        const s = v instanceof Date ? parseDate(v) : String(v == null ? '' : v).trim();
+        if (!s) return;
+        if (DONE_RE.test(s)) { status = 'Done'; return; }
+        if (MISS_RE.test(s) || ci === idx.status) return;
+        const head = sh.header[ci];
+        if (head) { if (rename[head] || !/^#$|^\u05de\u05e1'?$|^no\.?$/i.test(head)) extra[rename[head] || head] = s; }
+        else if (isNaN(Number(s))) notes.push(s);
+      });
+      const base = [month, date, merchant.toLowerCase().replace(/\s+/g, ' '), amount.toFixed(2), currency].join('|');
+      seen[base] = (seen[base] || 0) + 1;
+      rows.push({key:base + '#' + seen[base], month, date, merchant, amount, currency, charged,
+        chargedCurrency:idx.chargedCurrency != null ? normCur(r[idx.chargedCurrency]) : '',
+        details:idx.details != null ? String(r[idx.details]).trim() : '',
+        owner:idx.owner != null ? String(r[idx.owner]).trim() : '', status, note:notes.join('\n'), extra});
+      months[month] = (months[month] || 0) + 1;
+      perSheet[si] = (perSheet[si] || 0) + 1;
+    }
+  });
+  return {rows, months, perSheet, preview:rows.slice(0, 4), missingCore:!rows.length && (!choice.merchant || !choice.amount)};
+}
+
+/* ================= auto-match invoices ================= */
+const STOP = new Set(['pending','com','inc','ltd','llc','trip','help','the','www','sumup','revolut','me','co','bkg','gmbh','srl','spa','sub','retail','pay','paypal']);
+async function fileText(file){
+  let t = file.name.replace(/[_\-]+/g, ' ');
+  if (/pdf/i.test(file.type) || /\.pdf$/i.test(file.name)) {
+    try {
+      await lib('pdf');
+      const pdf = await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+      for (let p = 1; p <= Math.min(pdf.numPages, 3); p++) {
+        const c = await (await pdf.getPage(p)).getTextContent();
+        t += ' ' + c.items.map(i => i.str).join(' ');
+      }
+    } catch (e) { /* scanned or protected PDF: use the file name only */ }
+  }
+  return t;
+}
+function numbersIn(t){
+  const set = new Set();
+  (t.match(/\d[\d,.]*[.,]\d{2}(?!\d)|\b\d+\b/g) || []).forEach(s => { const n = num(s); if (n != null) set.add(n.toFixed(2)); });
+  return set;
+}
+function scoreRow(r, text, nums){
+  let score = 0; const why = [];
+  const lower = text.toLowerCase();
+  if (r.amount != null && nums.has(Number(r.amount).toFixed(2))) { score += 60; why.push('amount'); }
+  else if (r.charged != null && r.charged !== '' && nums.has(Number(r.charged).toFixed(2))) { score += 50; why.push('charged amount'); }
+  const tokens = r.merchant.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(w => w.length >= 3 && !STOP.has(w) && !/^\d+$/.test(w));
+  if (tokens.some(w => lower.includes(w))) { score += 30; why.push('vendor'); }
+  const x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.date || '');
+  if (x) {
+    const [, y, m, d] = x, yy = y.slice(2);
+    const forms = [`${d}/${m}/${y}`, `${d}.${m}.${y}`, `${d}/${m}/${yy}`, `${d}.${m}.${yy}`, `${y}-${m}-${d}`, `${m}/${d}/${y}`, `${+d}/${+m}/${y}`];
+    if (forms.some(f => text.includes(f))) { score += 12; why.push('date'); }
+  }
+  return {row:r, score, why};
+}
+async function startMatch(files){
+  return matchDialog(files.map(file => ({name:file.name, getText:() => fileText(file), attach:rowId => attach(rowId, [file])})), 'Each file is matched by amount, vendor and date. Check the matches before attaching.');
+}
+/* Files that are already in the Drive folder: suggest a charge for each, attach without re-uploading. */
+async function startDriveMatch(){
+  closeModal(); toast('Looking through the Drive folder\u2026');
+  let files;
+  try { files = await call('listLooseFiles'); } catch (e) { return toast(e.message, true); }
+  if (!files.length) return toast('Every file in the folder is already attached to a charge.');
+  const before = {};
+  return matchDialog(files.map(f => ({
+    name:f.name, url:f.url,
+    getText: async () => {
+      let t = f.name.replace(/[_\-]+/g, ' ');
+      if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) {
+        try {
+          const data = await call('getFileData', f.id);
+          if (data) {
+            await lib('pdf');
+            const bytes = Uint8Array.from(atob(data), ch => ch.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+            for (let p = 1; p <= Math.min(pdf.numPages, 3); p++) { const c = await (await pdf.getPage(p)).getTextContent(); t += ' ' + c.items.map(i => i.str).join(' '); }
+          }
+        } catch (e) { /* use the file name only */ }
+      }
+      return t;
+    },
+    attach: async rowId => {
+      const month = (S.rows.find(r => r.id === rowId) || {}).month, b4 = missingIn(month);
+      try { replaceRows([await call('attachExisting', rowId, f.id)]); settle([rowId], month, b4); }
+      catch (e) { toast(`${f.name}: ${e.message}`, true); }
+    }
+  })), `Found ${files.length} ${files.length === 1 ? 'file' : 'files'} in the folder that aren't attached yet. Matched files are renamed and moved to their month folder. The rest stay where they are.`);
+}
+async function matchDialog(items, intro){
+  items.forEach(it => { it.cands = []; it.choice = ''; it.why = ''; });
+  let reading = true, done = 0;
+  const missing = () => S.rows.filter(r => !isDone(r)).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const label = r => `${fmtDate(r.date)}  ${r.merchant}  ${money(r.amount, r.currency)}${S.month === 'all' || r.month === S.month ? '' : '  (' + fmtMonth(r.month) + ')'}`;
+  const nChosen = () => items.filter(it => it.choice).length;
+  const html = () => `<header><h2>Match ${items.length} ${items.length === 1 ? 'invoice' : 'invoices'}</h2>
+      <p>${reading ? `Reading files\u2026 ${done} of ${items.length}` : intro}</p></header>
+    <div class="body">${items.map((it, i) => `<div class="match"><div class="fname" dir="auto">${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.name)}</a>` : esc(it.name)}</div>
+      ${it.read ? `<select data-match="${i}" aria-label="Charge for ${esc(it.name)}">
+        <option value="">Don't attach</option>
+        ${it.cands.length ? `<optgroup label="Best matches">${it.cands.map(c => `<option value="${c.row.id}" ${it.choice === c.row.id ? 'selected' : ''}>${esc(label(c.row))}</option>`).join('')}</optgroup>` : ''}
+        <optgroup label="All missing charges">${missing().filter(r => !it.cands.some(c => c.row.id === r.id)).map(r => `<option value="${r.id}" ${it.choice === r.id ? 'selected' : ''}>${esc(label(r))}</option>`).join('')}</optgroup>
+      </select><div class="why ${it.why ? 'good' : ''}">${it.why ? 'Matched on ' + it.why : 'No clear match. Pick the charge yourself.'}</div>` : '<span class="muted"><span class="spin" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Reading</span>'}</div>`).join('')}</div>
+    <footer><button class="btn" data-act="modal-close">Cancel</button>
+      <button class="btn primary" data-act="modal-ok" ${reading || !nChosen() ? 'disabled' : ''}>Attach ${nChosen() || ''} ${nChosen() === 1 ? 'invoice' : 'invoices'}</button></footer>`;
+  showModal(html, async () => {
+    const todo = items.filter(it => it.choice); closeModal();
+    for (let k = 0; k < todo.length; k++) { toast(`Attaching ${k + 1} of ${todo.length}\u2026`); await todo[k].attach(todo[k].choice); }
+    if (todo.length) toast(`${todo.length} ${todo.length === 1 ? 'invoice' : 'invoices'} attached`);
+  });
+  document.getElementById('layer').onchange = e => {
+    if (e.target.dataset.match != null) { const it = items[+e.target.dataset.match]; it.choice = e.target.value; it.why = ''; renderLayer(); }
+  };
+  const taken = new Set();
+  for (const it of items) {
+    const text = await it.getText(), nums = numbersIn(text);
+    it.cands = missing().map(r => scoreRow(r, text, nums)).filter(c => c.score >= 30).sort((a, b) => b.score - a.score).slice(0, 6);
+    const best = it.cands.find(c => !taken.has(c.row.id));
+    if (best && best.score >= 60 && (!it.cands[1] || best.score > it.cands[1].score || best !== it.cands[0])) {
+      it.choice = best.row.id; it.why = best.why.join(', '); taken.add(best.row.id);
+    }
+    it.read = true; done++;
+    if (S.modal) renderLayer();
+  }
+  reading = false; if (S.modal) renderLayer();
+}
+
+/* ================= preview backend (only when not running in Apps Script) ================= */
+const Demo = (() => {
+  const wait = v => new Promise(r => setTimeout(() => r(JSON.parse(JSON.stringify(v))), 250));
+  const me = 'dana@acme.com';
+  const raw = [
+    ['10-29','LYFT *RIDE SFO',36,'\u20ac',39.1,'$','Online'],
+    ['10-29','NETLIFY INC.',19,'$',19,'$','Recurring'],
+    ['10-28','BLUE BOTTLE COFFEE',24,'\u20aa',24,'\u20aa',''],
+    ['10-28','BLUE BOTTLE COFFEE',24,'\u20aa',24,'\u20aa',''],
+    ['10-27','TRATTORIA DA LUCA',86,'\u20ac',93.4,'$','Abroad'],
+    ['10-27','GELATERIA SOLE',14,'\u20ac',15.2,'$','Abroad'],
+    ['10-26','HOLAFLY',22,'$',22,'$','Online'],
+    ['10-26','OSTERIA DEL PONTE',131.5,'\u20ac',142.8,'$','Abroad'],
+    ['10-25','DELIVEROO',72.4,'\u20aa',72.4,'\u20aa',''],
+    ['10-25','WHOLE FOODS MARKET',198.3,'\u20aa',198.3,'\u20aa',''],
+    ['10-24','GITHUB',44,'$',44,'$','Online'],
+    ['10-24','MEDIAWORLD MILANO',59.9,'\u20ac',65.05,'$','Abroad','Done','Laptop charger'],
+    ['10-23','HOTEL ARIA',212,'\u20ac',230.25,'$','Abroad','Done','Trade show, 2 nights'],
+    ['10-23','VODAFONE IT 221',25,'\u20ac',27.15,'$','Abroad','Done','Travel SIM'],
+    ['10-22','NOTION LABS',16,'$',16,'$','Online'],
+    ['10-21','CAREEM RIDE',52.3,'AED',14.24,'$','Online'],
+    ['10-21','LINEAR APP',19,'$',19,'$','Recurring'],
+    ['10-20','NORTHWIND CONSULTING LTD',1240,'\u20aa',1240,'\u20aa',''],
+    ['10-19','NOON FOOD',63.5,'AED',17.29,'$','Online'],
+    ['10-18','HOTELS.COM ROMA',388.6,'\u20ac',422.05,'$','Online','Done','Team offsite'],
+    ['10-17','ZOOM.US',149.9,'$',149.9,'$','Recurring'],
+    ['10-16','RYANAIR FR8XK2',214.37,'\u20ac',232.8,'$','Online','Done','Flight to client'],
+    ['10-16','RYANAIR BAGS',48,'\u20ac',52.15,'$','Online','Done'],
+    ['10-15','NOON FOOD',71.25,'AED',19.4,'$','Online'],
+    ['09-30','DROPBOX',198,'$',198,'$','Recurring'],
+    ['09-28','DIGITALOCEAN',612.4,'$',612.4,'$','Online','Done'],
+    ['09-21','CANVA',39,'$',39,'$','Online'],
+    ['09-14','PRET A MANGER',48,'\u20aa',48,'\u20aa','']
+  ];
+  const owners = {1:'omer@acme.com', 9:me, 10:me, 16:'noa@acme.com', 17:'finance@acme.com', 20:me};
+  let configured = false;
+  let rows = raw.map((x, i) => ({
+    id:'r' + i, key:'k' + i, month:'2026-' + x[0].slice(0, 2), date:'2026-' + x[0], merchant:x[1], amount:x[2], currency:x[3],
+    charged:x[4], chargedCurrency:x[5], details:x[6], status:x[7] || 'Missing', owner:owners[i] || '',
+    notes:x[8] ? [{by:'Excel', at:'2026-10-29T08:00:00Z', text:x[8]}] : [], files:[], extra:{'Card':i % 3 ? '\u2022\u2022\u2022\u2022 4417' : '\u2022\u2022\u2022\u2022 0921', 'Project':['R&D','Sales','Ops'][i % 3]},
+    updatedBy:'', updatedAt:''
+  }));
+  const touch = r => { r.updatedBy = me; r.updatedAt = new Date().toISOString(); return r; };
+  const find = id => rows.find(r => r.id === id);
+  return {
+    getState: () => wait({user:me, team:['dana@acme.com','omer@acme.com','noa@acme.com'], configured, folder:{name:'Invoices 2026', url:null}, summary:{email:'finance@acme.com', on:true}, allowed:['acme.com','partner.org'], domain:'acme.com', folder:{name:'Invoices 2026', url:null}, sheetUrl:null, rows}),
+    setup: (l, a) => { if (!/folders\/[\w-]{10,}|^[\w-]{20,}$/.test(String(l).trim())) return Promise.reject(new Error("That doesn't look like a Drive folder link. Copy it from the address bar of the folder.")); configured = true; return wait({user:me, configured:true, folder:{name:'Invoices 2026', url:null}, allowed:(a || 'acme.com').split(/[\s,]+/).filter(Boolean), rows}); },
+    saveAccess: t => wait(t.split(/[\s,;]+/).filter(Boolean)),
+    addCharge: c => { if (!c.merchant.trim()) return Promise.reject(new Error('Add the vendor.')); if (!(+c.amount > 0)) return Promise.reject(new Error('Add the amount.'));
+      const r = {id:'m' + Date.now(), key:'m' + Date.now(), month:c.date.slice(0, 7), date:c.date, merchant:c.merchant.trim(), amount:+c.amount, currency:c.currency, charged:+c.amount, chargedCurrency:c.currency,
+        details:c.details, status:'Missing', owner:c.owner, notes:c.note ? [{by:me, at:new Date().toISOString(), text:c.note}] : [], files:[], extra:{}, updatedBy:me, updatedAt:new Date().toISOString()};
+      rows.push(r); return wait(r); },
+    importRows: inc => { let added = 0; inc.forEach(x => { if (!rows.some(r => r.key === x.key)) { rows.push({...x, id:'n' + rows.length + Math.random().toString(36).slice(2, 6), notes:x.note ? [{by:'Excel', at:new Date().toISOString(), text:x.note}] : [], files:[], updatedBy:me, updatedAt:new Date().toISOString()}); added++; } }); return wait({added, updated:0, kept:inc.length - added, rows}); },
+    uploadInvoice: (id, f) => { const r = find(id); const ext = (f.name.match(/\.[a-z0-9]+$/i) || [''])[0];
+      r.files.push({id:'f' + Date.now(), name:`${r.date} ${r.merchant} ${r.amount.toFixed(2)}${ext}`, url:null, by:me, at:new Date().toISOString()}); r.status = 'Done'; return wait(touch(r)); },
+    removeFile: (id, fid) => { const r = find(id); r.files = r.files.filter(f => f.id !== fid); if (!r.files.length) r.status = 'Missing'; return wait(touch(r)); },
+    deleteCharge: id => { rows = rows.filter(r => r.id !== id); return wait({ok:true}); },
+    setStatus: (id, s) => wait(touch(Object.assign(find(id), {status:s}))),
+    addNote: (id, t) => { const r = find(id); r.notes.push({by:me, at:new Date().toISOString(), text:t}); return wait(touch(r)); },
+    updateMany: (ids, field, v) => wait(ids.map(id => touch(Object.assign(find(id), {[field]:v})))),
+    saveSummary: (email, on) => wait({email, on}),
+    sendMonthlySummary: () => wait({sent:true, count:rows.filter(r => r.status !== 'Done').length}),
+    listLooseFiles: () => wait([{id:'d1', name:'holafly receipt 22.00.pdf', type:'application/pdf', url:null}, {id:'d2', name:'github-invoice-44.00.pdf', type:'application/pdf', url:null}, {id:'d3', name:'IMG_2041.jpg', type:'image/jpeg', url:null}]),
+    getFileData: () => wait(null),
+    attachExisting: (id, fid) => { const r = find(id); r.files.push({id:fid, name:r.date + ' ' + r.merchant + '.pdf', url:null, by:me, at:new Date().toISOString()}); r.status = 'Done'; return wait(touch(r)); },
+    requestAgain: (id, t) => { const r = find(id); r.files.forEach(f => { f.rejected = true; f.rejectReason = t; }); r.notes.push({by:me, at:new Date().toISOString(), text:t, kind:'request'}); r.status = 'Missing'; return wait(touch(r)); },
+    syncDrive: () => wait({renamed:0, moved:0, missing:0, rows})
+  };
+})();
+
+load();
+</script>
+</body>
+</html>
