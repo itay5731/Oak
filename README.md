@@ -14,7 +14,7 @@
 **No more "who has the hotel invoice from the 14th?"** Oak replaces the monthly email thread between finance and
 everyone holding a company card.
 
-<a href="assets/screens/list-light.png"><img src="assets/screens/list-light.png" alt="Oak: this month's charges, what's still missing, and who's on it"></a>
+<img src="assets/gifs/attach.gif" alt="Dragging an invoice onto its charge: Oak saves it and marks the charge done">
 
 ## What you get
 
@@ -36,9 +36,11 @@ everyone holding a company card.
 - **Monthly summary.** On the 1st of each month, Oak emails finance what's still missing.
 - **Works everywhere.** Light and dark themes, right-to-left text, and a layout made for phones.
 
+<img src="assets/gifs/match.gif" alt="Dropping three invoices: Oak matches each one to its charge and marks them done">
+
 <a href="assets/screens/request-again.png"><img src="assets/screens/request-again.png" alt="An attached invoice, with Request again and a reason"></a>
 
-<a href="assets/screens/match.png"><img src="assets/screens/match.png" alt="Dropping three files: Oak matches two and leaves one for you"></a>
+<a href="assets/screens/list-light.png"><img src="assets/screens/list-light.png" alt="Oak: this month's charges, what's still missing, and who's on it"></a>
 
 <a href="assets/screens/filters.png"><img src="assets/screens/filters.png" alt="Filtering by vendor"></a>
 
