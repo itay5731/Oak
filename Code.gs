@@ -13,7 +13,7 @@ const ICON_URL = 'https://raw.githubusercontent.com/itay5731/Oak/main/assets/ico
 
 const PROPS = PropertiesService.getScriptProperties();
 const COLS = ['id', 'key', 'month', 'date', 'merchant', 'amount', 'currency', 'charged',
-  'chargedCurrency', 'details', 'status', 'owner', 'notes', 'files', 'extra', 'updatedBy', 'updatedAt', 'createdAt'];
+  'chargedCurrency', 'details', 'status', 'owner', 'notes', 'files', 'extra', 'updatedBy', 'updatedAt', 'createdAt', 'invoiceNo'];
 const JSON_COLS = { notes: [], files: [], extra: {} };
 
 
@@ -43,7 +43,9 @@ function getState() {
   state.allowedLocked = ALLOWED.length > 0;
   state.summary = { email: PROPS.getProperty('summaryEmail') || '', on: PROPS.getProperty('summaryOn') === '1' };
   state.syncDue = Date.now() - Number(PROPS.getProperty('lastSync') || 0) > 15 * 60 * 1000;
-  state.rows = readRows_().map(clean_);
+  const sh = sheet_();
+  if (sh.getRange(1, COLS.length).getValue() !== COLS[COLS.length - 1]) sh.getRange(1, 1, 1, COLS.length).setValues([COLS]).setFontWeight('bold');
+  state.rows = readRows_(sh).map(clean_);
   return state;
 }
 
@@ -158,15 +160,16 @@ function addCharge(c) {
 
 function uploadInvoice(rowId, file) {
   auth_();
-  const bytes = Utilities.base64Decode(file.data);
+  const r0 = findRow_(sheet_(), rowId);
+  const blob = Utilities.newBlob(Utilities.base64Decode(file.data), file.type || 'application/octet-stream', file.name);
+  blob.setName(invoiceName_(r0, file.name, r0.files.length));
+  const f = monthFolder_(r0.month).createFile(blob);
+  f.setDescription('Uploaded by ' + me_() + '. Original name: ' + file.name);
+  const invoiceNo = findInvoiceNo_(ocrText_(f.getId()));
   return withLock_(function () {
     const sh = sheet_();
     const r = findRow_(sh, rowId);
-    const blob = Utilities.newBlob(bytes, file.type || 'application/octet-stream', file.name);
-    blob.setName(invoiceName_(r, file.name, r.files.length));
-    const f = monthFolder_(r.month).createFile(blob);
-    f.setDescription('Uploaded by ' + me_() + '. Original name: ' + file.name);
-    r.files.push({ id: f.getId(), name: f.getName(), original: file.name, url: f.getUrl(), by: me_(), at: new Date().toISOString() });
+    r.files.push({ id: f.getId(), name: f.getName(), original: file.name, url: f.getUrl(), by: me_(), at: new Date().toISOString(), invoiceNo: invoiceNo });
     r.status = 'Done';
     touch_(r); writeRow_(sh, r);
     log_('upload', r.id, f.getName());
@@ -256,17 +259,10 @@ function listLooseFiles() {
   return out;
 }
 
-/** A PDF's bytes, so the browser can read its text for matching (up to 8 MB). */
-function getFileData(fileId) {
-  auth_();
-  const f = DriveApp.getFileById(fileId);
-  if (f.getSize() > 8 * 1024 * 1024) return null;
-  return Utilities.base64Encode(f.getBlob().getBytes());
-}
-
 /** Attach a file that's already in Drive: rename it, move it to its month folder, mark the charge done. */
-function attachExisting(rowId, fileId) {
+function attachExisting(rowId, fileId, invoiceNo) {
   auth_();
+  if (invoiceNo == null) invoiceNo = findInvoiceNo_(ocrText_(fileId));
   return withLock_(function () {
     const sh = sheet_();
     const r = findRow_(sh, rowId);
@@ -274,7 +270,7 @@ function attachExisting(rowId, fileId) {
     const original = f.getName();
     f.setName(invoiceName_(r, original, r.files.length));
     f.moveTo(monthFolder_(r.month));
-    r.files.push({ id: fileId, name: f.getName(), original: original, url: f.getUrl(), by: me_(), at: new Date().toISOString() });
+    r.files.push({ id: fileId, name: f.getName(), original: original, url: f.getUrl(), by: me_(), at: new Date().toISOString(), invoiceNo: String(invoiceNo || '') });
     r.status = 'Done';
     touch_(r); writeRow_(sh, r);
     log_('attach existing', r.id, original);
@@ -516,6 +512,7 @@ function toArr_(r) {
 }
 
 function writeRow_(sh, r) {
+  r.invoiceNo = r.files.filter(function (f) { return f.invoiceNo && !f.rejected; }).map(function (f) { return f.invoiceNo; }).join(', ');
   const rng = sh.getRange(r._row, 1, 1, COLS.length);
   rng.setNumberFormat('@');
   rng.setValues([toArr_(r)]);

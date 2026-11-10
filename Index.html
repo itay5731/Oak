@@ -114,6 +114,8 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 /* toolbar */
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 0}
 .tools .add-row{margin-left:auto}
+.files .inv-no{display:block}
+.files .inv-no b{font-weight:500;color:var(--text)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .field select{width:100%;height:38px;border:1px solid var(--line-2);border-radius:9px;padding:0 10px;background:var(--raised);color:inherit;font:inherit}
 .field .opt{font-weight:400;color:var(--text-3)}
@@ -369,6 +371,7 @@ body.dragging .dock{transform:translate(-50%,0)}
 .dock.over{border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
 .dock strong{display:block;font-weight:600}
 .dock span{color:var(--text-2);font-size:13px}
+#working{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line-2);box-shadow:0 8px 28px rgba(0,0,0,.12);padding:10px 16px;border-radius:10px;z-index:89;font-size:13.5px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:90;max-width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;animation:rise .18s ease-out}
 .toast.bad{background:var(--danger);color:#fff}
 body:has(.selbar) .toast{bottom:84px}
@@ -407,6 +410,7 @@ body:has(.selbar) .toast{bottom:84px}
   .c.x{display:none}
 }
 @media (max-width:760px){
+  .tools [data-act="cols"]{display:none}
   .top{padding:0 14px}
   .crumb > span,.crumb > a,.top .theme{display:none}
   .crumb{margin-right:0}
@@ -470,6 +474,7 @@ body:has(.selbar) .toast{bottom:84px}
 <div id="layer"></div>
 <div class="dock" id="dock" aria-hidden="true"><strong>Drop invoices here to match them automatically</strong><span>Or drop a file on a row to attach it to that charge</span></div>
 <input type="file" id="fileAttach" class="sr" multiple>
+<input type="file" id="fileSort" class="sr" multiple>
 <input type="file" id="fileImport" class="sr" accept=".xlsx,.xls,.xlsm,.csv">
 <script>
 /* ================= theme: light (default), dark, or follow the computer ================= */
@@ -486,15 +491,14 @@ function call(name, ...args){
     .withSuccessHandler(res)
     .withFailureHandler(e => rej(new Error((e && e.message) || String(e))))[name](...args));
 }
-/* Excel and PDF readers load only when needed, so a slow CDN never blocks the app. */
-const LIBS = {xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'};
+/* The Excel reader loads only when needed, so a slow CDN never blocks the app. */
+const LIBS = {xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'};
 function lib(name){
   if (name === 'xlsx' && window.XLSX) return Promise.resolve();
-  if (name === 'pdf' && window.pdfjsLib) return Promise.resolve();
   return new Promise((res, rej) => {
     const sc = document.createElement('script'); sc.src = LIBS[name];
-    sc.onload = () => { if (name === 'pdf' && window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
-    sc.onerror = () => rej(new Error('Could not load the ' + (name === 'xlsx' ? 'Excel' : 'PDF') + ' reader. Check your connection and try again.'));
+    sc.onload = () => res();
+    sc.onerror = () => rej(new Error('Could not load the Excel reader. Check your connection and try again.'));
     document.head.appendChild(sc);
   });
 }
@@ -602,7 +606,7 @@ function passFilters(r, skip){
   }
   const q = S.q.trim().toLowerCase();
   if (q) {
-    const hay = [r.merchant, r.details, r.owner, person(r.owner), r.amount, r.charged, money(r.amount, r.currency),
+    const hay = [r.merchant, r.details, r.owner, person(r.owner), r.files.map(f => f.invoiceNo).join(' '), r.amount, r.charged, money(r.amount, r.currency),
       ...r.notes.map(n => n.text), ...Object.values(r.extra || {})].join(' ').toLowerCase();
     if (!hay.includes(q)) return false;
   }
@@ -667,7 +671,8 @@ function render(){
         <div class="seg" role="group" aria-label="Status" id="seg"></div>
         <span class="vr"></span>
         <div class="chips" id="chips"></div>
-        <button class="btn ghost add-row" data-act="add-charge">${I.plus}Add charge</button>
+        <button class="btn ghost add-row" data-act="sort-files">${I.upload}Upload invoices</button>
+        <button class="btn ghost" data-act="add-charge">${I.plus}Add charge</button>
       </div>
       <div id="list"></div>
     </div>`;
@@ -819,7 +824,7 @@ function paneHtml(r){
       <h3>Invoice <span class="pill ${done ? 'done' : 'missing'}">${done ? I.check + 'Done' : 'Missing'}</span></h3>
       ${reRequest(r) ? `<div class="again-box"><strong>${I.redo} Requested again by ${esc(person(reRequest(r).by))}</strong><p dir="auto">${esc(reRequest(r).text)}</p></div>` : ''}
       ${r.files.length ? `<ul class="files">${r.files.map(f => `<li class="${f.rejected ? 'rejected' : ''}"><div>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}
-        <small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
+        ${f.invoiceNo ? `<small class="inv-no">Invoice no. <b>${esc(f.invoiceNo)}</b></small>` : ''}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
         ${f.url ? `<button class="btn ghost" data-act="preview" data-id="${r.id}" data-file="${esc(f.id)}">Preview</button>` : ''}<button class="btn ghost danger" data-act="remove-file" data-id="${r.id}" data-file="${esc(f.id)}">Delete</button></li>`).join('')}</ul>` : ''}
       ${previewHtml(r)}
       <div class="dropzone" data-drop-row="${r.id}">Drop ${r.files.length ? 'another file' : 'the invoice'} here or <button data-act="attach" data-id="${r.id}">choose a file</button></div>
@@ -1100,6 +1105,7 @@ const actions = {
   'modal-bg': (el, e) => { if (e.target === el) closeModal(); },
   'modal-close': () => closeModal(),
   'add-charge': () => showAddCharge(),
+  'sort-files': () => { $('#fileSort').value = ''; $('#fileSort').click(); },
   'modal-ok': () => S.modal && S.modal.ok && S.modal.ok()
 };
 async function bulk(ids, field, value, msg){
@@ -1327,6 +1333,7 @@ function celebrate(month){
   document.body.appendChild(b); setTimeout(() => b.animate([{opacity:1}, {opacity:0}], {duration:300, fill:'forwards'}).onfinish = () => b.remove(), 3200);
 }
 $('#fileAttach').addEventListener('change', e => { if (attachTarget && e.target.files.length) attach(attachTarget, e.target.files); });
+$('#fileSort').addEventListener('change', e => { if (e.target.files.length) autoSort(e.target.files); });
 $('#fileImport').addEventListener('change', e => { if (e.target.files[0]) startImport(e.target.files[0]); });
 
 /* ---------- drag and drop ---------- */
@@ -1357,7 +1364,7 @@ document.addEventListener('drop', e => {
   if (!docs.length) return;
   if (zone) return attach(zone.dataset.dropRow, docs);
   if (row) return attach(row.dataset.row, docs);
-  startMatch(docs);
+  autoSort(docs);
 });
 
 /* ================= Excel import ================= */
@@ -1610,20 +1617,6 @@ function buildImport({sheets, choice, custom = []}){
 
 /* ================= auto-match invoices ================= */
 const STOP = new Set(['pending','com','inc','ltd','llc','trip','help','the','www','sumup','revolut','me','co','bkg','gmbh','srl','spa','sub','retail','pay','paypal']);
-async function fileText(file){
-  let t = file.name.replace(/[_\-]+/g, ' ');
-  if (/pdf/i.test(file.type) || /\.pdf$/i.test(file.name)) {
-    try {
-      await lib('pdf');
-      const pdf = await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-      for (let p = 1; p <= Math.min(pdf.numPages, 3); p++) {
-        const c = await (await pdf.getPage(p)).getTextContent();
-        t += ' ' + c.items.map(i => i.str).join(' ');
-      }
-    } catch (e) { /* scanned or protected PDF: use the file name only */ }
-  }
-  return t;
-}
 function numbersIn(t){
   const set = new Set();
   (t.match(/\d[\d,.]*[.,]\d{2}(?!\d)|\b\d+\b/g) || []).forEach(s => { const n = num(s); if (n != null) set.add(n.toFixed(2)); });
@@ -1644,8 +1637,51 @@ function scoreRow(r, text, nums){
   }
   return {row:r, score, why};
 }
-async function startMatch(files){
-  return matchDialog(files.map(file => ({name:file.name, getText:() => fileText(file), attach:rowId => attach(rowId, [file])})), 'Each file is matched by amount, vendor and date. Check the matches before attaching.');
+/* Drop invoices anywhere: each one is saved to Drive, read, and attached when Oak is sure of the charge. */
+async function autoSort(files){
+  files = [...files].filter(f => f.size <= MAX || (toast(`${f.name} is larger than 25 MB. Compress it and try again.`, true), false));
+  if (!files.length) return;
+  const sure = [], review = [], taken = new Set();
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    working(`Reading ${files.length === 1 ? 'the invoice' : `invoice ${i + 1} of ${files.length}`}\u2026`);
+    try {
+      const staged = await call('stageFile', {name:file.name, type:file.type, data:await readB64(file)});
+      const read = await call('readInvoice', staged.id);
+      const item = {name:file.name, url:staged.url, fileId:staged.id, invoiceNo:read.invoiceNo, text:file.name.replace(/[_\-]+/g, ' ') + ' ' + read.text};
+      item.dup = sameInvoice(item);
+      const best = !item.dup && sureMatch(item.text, taken);
+      if (best) { taken.add(best.id); sure.push([item, best.id]); } else review.push(item);
+    } catch (e) { toast(`${file.name}: ${e.message}`, true); }
+  }
+  working('');
+  for (const [item, rowId] of sure) await attachStaged(item, rowId);
+  if (sure.length && !review.length) toast(`${sure.length} ${sure.length === 1 ? 'invoice' : 'invoices'} attached`);
+  if (review.length) matchDialog(review.map(it => ({...it, getText:async () => it.text, attach:rowId => attachStaged(it, rowId)})),
+    `${sure.length ? `Oak attached ${sure.length}. ` : ''}Pick the charge for ${review.length === 1 ? 'this one' : 'these'}. Files you don't attach stay in the Drive folder.`);
+}
+function working(msg){
+  let p = $('#working');
+  if (!msg) return p && p.remove();
+  if (!p) { p = document.createElement('div'); p.id = 'working'; p.setAttribute('role', 'status'); document.body.appendChild(p); }
+  p.innerHTML = `<span class="spin"></span>${esc(msg)}`;
+}
+/* Attach when one charge clearly wins: same amount, plus the vendor or the date. */
+function sureMatch(text, taken){
+  const nums = numbersIn(text);
+  const c = S.rows.filter(r => !isDone(r) && !taken.has(r.id)).map(r => scoreRow(r, text, nums)).sort((a, b) => b.score - a.score);
+  return c[0] && c[0].score >= 72 && c[0].why.includes('amount') && (!c[1] || c[1].score < c[0].score) ? c[0].row : null;
+}
+/* An invoice number that's already on a charge with the same vendor or amount: the same invoice, uploaded twice. */
+function sameInvoice(item){
+  if (!item.invoiceNo) return null;
+  const nums = numbersIn(item.text);
+  return S.rows.find(r => r.files.some(f => !f.rejected && f.invoiceNo === item.invoiceNo) && scoreRow(r, item.text, nums).score >= 30) || null;
+}
+async function attachStaged(item, rowId){
+  const month = (S.rows.find(r => r.id === rowId) || {}).month, before = missingIn(month);
+  try { replaceRows([await call('attachExisting', rowId, item.fileId, item.invoiceNo || '')]); settle([rowId], month, before); }
+  catch (e) { toast(`${item.name}: ${e.message}`, true); }
 }
 /* Files that are already in the Drive folder: suggest a charge for each, attach without re-uploading. */
 async function startDriveMatch(){
@@ -1653,30 +1689,12 @@ async function startDriveMatch(){
   let files;
   try { files = await call('listLooseFiles'); } catch (e) { return toast(e.message, true); }
   if (!files.length) return toast('Every file in the folder is already attached to a charge.');
-  const before = {};
-  return matchDialog(files.map(f => ({
-    name:f.name, url:f.url,
-    getText: async () => {
-      let t = f.name.replace(/[_\-]+/g, ' ');
-      if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) {
-        try {
-          const data = await call('getFileData', f.id);
-          if (data) {
-            await lib('pdf');
-            const bytes = Uint8Array.from(atob(data), ch => ch.charCodeAt(0));
-            const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
-            for (let p = 1; p <= Math.min(pdf.numPages, 3); p++) { const c = await (await pdf.getPage(p)).getTextContent(); t += ' ' + c.items.map(i => i.str).join(' '); }
-          }
-        } catch (e) { /* use the file name only */ }
-      }
-      return t;
-    },
-    attach: async rowId => {
-      const month = (S.rows.find(r => r.id === rowId) || {}).month, b4 = missingIn(month);
-      try { replaceRows([await call('attachExisting', rowId, f.id)]); settle([rowId], month, b4); }
-      catch (e) { toast(`${f.name}: ${e.message}`, true); }
-    }
-  })), `Found ${files.length} ${files.length === 1 ? 'file' : 'files'} in the folder that aren't attached yet. Matched files are renamed and moved to their month folder. The rest stay where they are.`);
+  return matchDialog(files.map(f => {
+    const it = {name:f.name, url:f.url, fileId:f.id, invoiceNo:''};
+    it.getText = async () => { try { const r = await call('readInvoice', f.id); it.invoiceNo = r.invoiceNo; return f.name.replace(/[_\-]+/g, ' ') + ' ' + r.text; } catch (e) { return f.name; } };
+    it.attach = rowId => attachStaged(it, rowId);
+    return it;
+  }), `Found ${files.length} ${files.length === 1 ? 'file' : 'files'} in the folder that aren't attached yet. Matched files are renamed and moved to their month folder. The rest stay where they are.`);
 }
 async function matchDialog(items, intro){
   items.forEach(it => { it.cands = []; it.choice = ''; it.why = ''; });
@@ -1691,7 +1709,7 @@ async function matchDialog(items, intro){
         <option value="">Don't attach</option>
         ${it.cands.length ? `<optgroup label="Best matches">${it.cands.map(c => `<option value="${c.row.id}" ${it.choice === c.row.id ? 'selected' : ''}>${esc(label(c.row))}</option>`).join('')}</optgroup>` : ''}
         <optgroup label="All missing charges">${missing().filter(r => !it.cands.some(c => c.row.id === r.id)).map(r => `<option value="${r.id}" ${it.choice === r.id ? 'selected' : ''}>${esc(label(r))}</option>`).join('')}</optgroup>
-      </select><div class="why ${it.why ? 'good' : ''}">${it.why ? 'Matched on ' + it.why : 'No clear match. Pick the charge yourself.'}</div>` : '<span class="muted"><span class="spin" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Reading</span>'}</div>`).join('')}</div>
+      </select><div class="why ${it.why ? 'good' : ''}">${it.dup ? `Invoice ${esc(it.invoiceNo)} is already attached to ${esc(it.dup.merchant)}.` : it.why ? 'Matched on ' + it.why : 'No clear match. Pick the charge yourself.'}</div>` : '<span class="muted"><span class="spin" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Reading</span>'}</div>`).join('')}</div>
     <footer><button class="btn" data-act="modal-close">Cancel</button>
       <button class="btn primary" data-act="modal-ok" ${reading || !nChosen() ? 'disabled' : ''}>Attach ${nChosen() || ''} ${nChosen() === 1 ? 'invoice' : 'invoices'}</button></footer>`;
   showModal(html, async () => {
@@ -1707,7 +1725,7 @@ async function matchDialog(items, intro){
     const text = await it.getText(), nums = numbersIn(text);
     it.cands = missing().map(r => scoreRow(r, text, nums)).filter(c => c.score >= 30).sort((a, b) => b.score - a.score).slice(0, 6);
     const best = it.cands.find(c => !taken.has(c.row.id));
-    if (best && best.score >= 60 && (!it.cands[1] || best.score > it.cands[1].score || best !== it.cands[0])) {
+    if (!it.dup && best && best.score >= 60 && (!it.cands[1] || best.score > it.cands[1].score || best !== it.cands[0])) {
       it.choice = best.row.id; it.why = best.why.join(', '); taken.add(best.row.id);
     }
     it.read = true; done++;
@@ -1752,6 +1770,7 @@ const Demo = (() => {
   ];
   const owners = {1:'omer@acme.com', 9:me, 10:me, 16:'noa@acme.com', 17:'finance@acme.com', 20:me};
   let configured = false;
+  const staged = {};
   let rows = raw.map((x, i) => ({
     id:'r' + i, key:'k' + i, month:'2026-' + x[0].slice(0, 2), date:'2026-' + x[0], merchant:x[1], amount:x[2], currency:x[3],
     charged:x[4], chargedCurrency:x[5], details:x[6], status:x[7] || 'Missing', owner:owners[i] || '',
@@ -1770,7 +1789,7 @@ const Demo = (() => {
       rows.push(r); return wait(r); },
     importRows: inc => { let added = 0; inc.forEach(x => { if (!rows.some(r => r.key === x.key)) { rows.push({...x, id:'n' + rows.length + Math.random().toString(36).slice(2, 6), notes:x.note ? [{by:'Excel', at:new Date().toISOString(), text:x.note}] : [], files:[], updatedBy:me, updatedAt:new Date().toISOString()}); added++; } }); return wait({added, updated:0, kept:inc.length - added, rows}); },
     uploadInvoice: (id, f) => { const r = find(id); const ext = (f.name.match(/\.[a-z0-9]+$/i) || [''])[0];
-      r.files.push({id:'f' + Date.now(), name:`${r.date} ${r.merchant} ${r.amount.toFixed(2)}${ext}`, url:null, by:me, at:new Date().toISOString()}); r.status = 'Done'; return wait(touch(r)); },
+      r.files.push({id:'f' + Date.now(), name:`${r.date} ${r.merchant} ${r.amount.toFixed(2)}${ext}`, url:null, by:me, at:new Date().toISOString(), invoiceNo:'INV-' + (1000 + Math.floor(Math.random() * 9000))}); r.status = 'Done'; return wait(touch(r)); },
     removeFile: (id, fid) => { const r = find(id); r.files = r.files.filter(f => f.id !== fid); if (!r.files.length) r.status = 'Missing'; return wait(touch(r)); },
     deleteCharge: id => { rows = rows.filter(r => r.id !== id); return wait({ok:true}); },
     setStatus: (id, s) => wait(touch(Object.assign(find(id), {status:s}))),
@@ -1779,8 +1798,9 @@ const Demo = (() => {
     saveSummary: (email, on) => wait({email, on}),
     sendMonthlySummary: () => wait({sent:true, count:rows.filter(r => r.status !== 'Done').length}),
     listLooseFiles: () => wait([{id:'d1', name:'holafly receipt 22.00.pdf', type:'application/pdf', url:null}, {id:'d2', name:'github-invoice-44.00.pdf', type:'application/pdf', url:null}, {id:'d3', name:'IMG_2041.jpg', type:'image/jpeg', url:null}]),
-    getFileData: () => wait(null),
-    attachExisting: (id, fid) => { const r = find(id); r.files.push({id:fid, name:r.date + ' ' + r.merchant + '.pdf', url:null, by:me, at:new Date().toISOString()}); r.status = 'Done'; return wait(touch(r)); },
+    stageFile: f => { const id = 's' + Date.now() + Math.random().toString(36).slice(2, 6); staged[id] = f.name; return wait({id, name:f.name, url:null}); },
+    readInvoice: id => wait({text:'', invoiceNo:'INV-' + (1000 + [...(staged[id] || id)].reduce((n, c) => n + c.charCodeAt(0), 0) % 9000)}),
+    attachExisting: (id, fid, no) => { const r = find(id); r.files.push({id:fid, name:r.date + ' ' + r.merchant + '.pdf', url:null, by:me, at:new Date().toISOString(), invoiceNo:no || ''}); r.status = 'Done'; return wait(touch(r)); },
     requestAgain: (id, t) => { const r = find(id); r.files.forEach(f => { f.rejected = true; f.rejectReason = t; }); r.notes.push({by:me, at:new Date().toISOString(), text:t, kind:'request'}); r.status = 'Missing'; return wait(touch(r)); },
     syncDrive: () => wait({renamed:0, moved:0, missing:0, rows})
   };

@@ -23,8 +23,11 @@ everyone holding a company card.
   columns (card, project, anything). Importing again only adds new charges, so nothing you've done is lost.
 - **Or add it by hand.** A cash expense or a charge from another card? **Add charge** puts it on the list with
   everything else.
-- **Drop the invoice on the charge.** Drag a file onto a row, or drop a pile of files anywhere and Oak matches
-  each one by amount, vendor and date. You check the matches, then attach.
+- **Drop the invoices, Oak sorts them.** Drop one file or a whole pile anywhere on the page, or tap **Upload
+  invoices** on your phone. Oak reads each one, scans and photos included, finds the amount, vendor, date and
+  invoice number, and attaches it to its charge. Only the files it isn't sure about wait for you to pick.
+- **Invoice numbers, kept.** Every invoice number is saved on its charge and in the data sheet, and you can search
+  by it. Drop the same invoice twice and Oak tells you instead of attaching it again.
 - **Your Drive stays tidy.** Every invoice is saved to your Drive folder, renamed to
   `2026-10-21 LINEAR APP 19.00 USD.pdf` and sorted into a folder per month. Delete it in Oak and it moves to Drive's trash too.
 - **Done means done.** Once a charge has its invoice it's marked done, so nobody goes looking for it again.
@@ -64,8 +67,8 @@ everyone holding a company card.
   account to create, nothing to host and nothing to pay.
 - **Your data stays in your Google Workspace.** Charges are kept in a Google Sheet inside your Drive folder, and
   invoices are files in that same folder.
-- **No tracking.** Oak has no analytics. Apart from Google, the only things it loads are two open-source libraries
-  for reading Excel and PDF files, from cdnjs.
+- **No tracking.** Oak has no analytics. Invoices are read by Google Drive's own text recognition, inside your
+  account. Apart from Google, the only thing Oak loads is an open-source library for reading Excel files, from cdnjs.
 
 ## Set it up (about 10 minutes)
 
@@ -74,10 +77,11 @@ Do this once, signed in with the Google account that should own the invoices (us
 1. **Make a Drive folder** for the invoices, for example "Invoices". Share it as **Editor** with everyone who'll use Oak.
 2. **Create the script.** Go to [script.google.com](https://script.google.com), click **New project** and name it
    "Oak". In **Project Settings** (the gear), turn on **Show "appsscript.json" manifest file in editor**.
-3. **Paste the three files** from this repo:
+3. **Paste the four files** from this repo:
    - `Code.gs` → replace the contents of `Code.gs`
    - `appsscript.json` → replace the contents of `appsscript.json` (change `timeZone` to yours)
    - Click **+ → HTML**, name it `Index` (no extension), and paste `Index.html`
+   - Click **+ → Script**, name it `Invoice`, and paste `Invoice.gs`
 4. **Deploy.** Click **Deploy → New deployment**, choose **Web app**, and set:
    - Execute as: **User accessing the web app**
    - Who has access: **Anyone with Google account**
@@ -135,13 +139,6 @@ invoices fully apart.
 **Is this affiliated with Google?**
 No. Oak is an independent open-source project that runs on Google Apps Script.
 
-## Roadmap
-
-- **Read the invoice.** Pull the amount and date out of scanned PDFs and photos, so dropped files match their
-  charges even when the file name says nothing.
-
-Ideas and pull requests are welcome.
-
 ## About
 
 Oak started as a fix for one finance team's monthly chase for invoices, and that team now uses it every month. It was built by [Itay Nadir](https://github.com/itay5731), vibe coded with AI, and tested against real
@@ -149,7 +146,6 @@ card statements.
 
 ## License
 
-[MIT](LICENSE) © 2026 Itay Nadir. Oak uses [SheetJS](https://sheetjs.com) and [PDF.js](https://mozilla.github.io/pdf.js/),
-each under its own license.
+[MIT](LICENSE) © 2026 Itay Nadir. Oak uses [SheetJS](https://sheetjs.com) under its own license.
 
 Google, Google Drive and Google Workspace are trademarks of Google LLC.
