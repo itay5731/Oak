@@ -26,8 +26,9 @@ everyone holding a company card.
 - **Drop the invoices, Oak sorts them.** Drop one file or a whole pile anywhere on the page, or tap **Upload
   invoices** on your phone. Oak reads each one, scans and photos included, finds the amount, vendor, date and
   invoice number, and attaches it to its charge. Only the files it isn't sure about wait for you to pick.
-- **Invoice numbers, kept.** Every invoice number is saved on its charge and in the data sheet, and you can search
-  by it. Drop the same invoice twice and Oak tells you instead of attaching it again.
+- **Invoice numbers, kept.** Each invoice number shows on its charge in the list, is saved in the data sheet, and
+  you can search by it. Drop the same invoice twice and Oak tells you instead of attaching it again. For invoices
+  attached earlier, **Settings → Drive → Read numbers** fills them in.
 - **Your Drive stays tidy.** Every invoice is saved to your Drive folder, renamed to
   `2026-10-21 LINEAR APP 19.00 USD.pdf` and sorted into a folder per month. Delete it in Oak and it moves to Drive's trash too.
 - **Done means done.** Once a charge has its invoice it's marked done, so nobody goes looking for it again.
@@ -121,6 +122,9 @@ before importing. Status columns like "OK" or "Missing" are picked up too.
 **What happens if someone imports the wrong file, or the same file twice?**
 Charges are matched by date, vendor and amount, so the same charge is never added twice, and an import never deletes
 or resets anything. A charge added by mistake can be deleted from its side panel.
+
+**Finance deletes invoices from the Drive folder once they're handled. Is that a problem?**
+No. A charge stays done when its file is removed from Drive, and the side panel notes that the file was removed.
 
 **Someone dropped files straight into the Drive folder. Now what?**
 Open **Settings → Drive → Match files**. Oak lists the files that aren't attached yet and suggests a charge for each.

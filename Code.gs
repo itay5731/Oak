@@ -204,7 +204,7 @@ function deleteCharge(rowId) {
 }
 
 /** Re-checks every attached file: renames to the house format, moves to the right month folder,
- *  and flags files someone deleted in Drive. A flagged charge stays as it is until a person decides. */
+ *  and flags files removed from Drive. Finance removes handled invoices, so the charge stays Done. */
 function syncDrive() {
   auth_();
   return withLock_(function () {
@@ -231,7 +231,7 @@ function syncDrive() {
       if (ch) writeRow_(sh, r);
     });
     PROPS.setProperty('lastSync', String(Date.now()));
-    if (renamed || moved || missing) log_('sync drive', '', renamed + ' renamed, ' + moved + ' moved, ' + missing + ' deleted in Drive');
+    if (renamed || moved || missing) log_('sync drive', '', renamed + ' renamed, ' + moved + ' moved, ' + missing + ' removed from Drive');
     return { renamed: renamed, moved: moved, missing: missing, rows: readRows_(sh).map(clean_) };
   });
 }

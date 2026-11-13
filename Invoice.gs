@@ -32,6 +32,7 @@ function ocrText_(fileId) {
     doc = Drive.Files.copy({ name: 'Oak is reading this file', mimeType: MimeType.GOOGLE_DOCS }, fileId);
     return DocumentApp.openById(doc.id).getBody().getText();
   } catch (e) {
+    console.error('Could not read ' + f.getName() + ': ' + e.message);
     return '';
   } finally {
     if (doc) try { Drive.Files.remove(doc.id); } catch (e) { /* left in Drive, harmless */ }
