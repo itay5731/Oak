@@ -38,6 +38,26 @@ function ocrText_(fileId) {
   }
 }
 
+/** Reads the invoice number of files attached before Oak could read them. Call again until left is 0. */
+function fillInvoiceNos() {
+  auth_();
+  const start = Date.now(), found = {}, todo = [];
+  readRows_().forEach(function (r) { r.files.forEach(function (f) { if (f.invoiceNo == null && !f.gone) todo.push(f.id); }); });
+  let i = 0;
+  for (; i < todo.length && Date.now() - start < 90000; i++) {
+    try { found[todo[i]] = findInvoiceNo_(ocrText_(todo[i])); } catch (e) { found[todo[i]] = ''; }
+  }
+  return withLock_(function () {
+    const sh = sheet_(), changed = [];
+    readRows_(sh).forEach(function (r) {
+      let ch = false;
+      r.files.forEach(function (f) { if (f.id in found && f.invoiceNo == null) { f.invoiceNo = found[f.id]; ch = true; } });
+      if (ch) { writeRow_(sh, r); changed.push(clean_(r)); }
+    });
+    return { left: todo.length - i, found: Object.keys(found).filter(function (k) { return found[k]; }).length, rows: changed };
+  });
+}
+
 /** The number next to an "Invoice no." style label, on the same line (either side, for right-to-left text) or the next. */
 function findInvoiceNo_(text) {
   const lines = String(text || '').split(/\r?\n/);

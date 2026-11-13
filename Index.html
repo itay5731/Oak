@@ -172,6 +172,8 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 .inv.missing{border:1px dashed var(--miss-line);background:transparent;color:var(--miss)}
 .inv.missing:hover{background:var(--miss-soft);border-style:solid}
 .inv.done{background:var(--done-soft);color:var(--done);border:1px solid transparent}
+.inv.gone{background:transparent;color:var(--danger);border:1px solid currentColor;cursor:pointer}
+.files .gone-note{display:block;color:var(--danger)}
 a.inv.done:hover{border-color:currentColor}
 .inv.again{border:1px solid var(--text);background:var(--raised);color:var(--text)}
 .inv.again:hover{background:var(--hover)}
@@ -584,6 +586,7 @@ const I = {
   lock:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',
   plus:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
   cols:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="M6 2.5v11M10 2.5v11"/></svg>',
+  alert:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v3.6M8 11h.01"/></svg>',
   upload:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.5V2.5M4.75 5.5 8 2.25l3.25 3.25M2.5 10.5v2a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>'
 };
 
@@ -756,10 +759,13 @@ function renderList(){
 function rowHtml(r){
   const done = isDone(r);
   const last = reRequest(r) || r.notes[r.notes.length - 1];
-  const f0 = r.files.filter(f => !f.rejected)[0] || r.files[0];
-  const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>` : done
-    ? (f0 && f0.url ? `<a class="inv done" href="${esc(f0.url)}" target="_blank" rel="noopener" title="${esc(f0.name)}">${I.check}${r.files.length > 1 ? r.files.length + ' files' : 'Invoice'}</a>`
-                    : `<span class="inv done">${I.check}${f0 ? 'Invoice' : 'Done'}</span>`)
+  const live = r.files.filter(f => !f.rejected), f0 = live[0] || r.files[0];
+  const tag = f0 && f0.invoiceNo ? esc(f0.invoiceNo) + (live.length > 1 ? ` +${live.length - 1}` : '') : live.length > 1 ? live.length + ' files' : 'Invoice';
+  const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>`
+    : done && live.length && live.every(f => f.gone) ? `<button class="inv gone" data-act="open" data-id="${r.id}" title="Someone deleted this file in Drive">${I.alert}File deleted</button>`
+    : done
+    ? (f0 && f0.url ? `<a class="inv done" href="${esc(f0.url)}" target="_blank" rel="noopener" title="${esc(f0.name)}">${I.check}${tag}</a>`
+                    : `<span class="inv done">${I.check}${f0 ? tag : 'Done'}</span>`)
     : reRequest(r) ? `<button class="inv again" data-act="attach" data-id="${r.id}" title="${esc(reRequest(r).text)}">${I.redo}Requested again</button>`
     : `<button class="inv missing" data-act="attach" data-id="${r.id}">${I.clip}Attach invoice</button>`;
   const hasCharged = r.charged != null && r.charged !== '' && !isNaN(r.charged);
@@ -824,7 +830,7 @@ function paneHtml(r){
       <h3>Invoice <span class="pill ${done ? 'done' : 'missing'}">${done ? I.check + 'Done' : 'Missing'}</span></h3>
       ${reRequest(r) ? `<div class="again-box"><strong>${I.redo} Requested again by ${esc(person(reRequest(r).by))}</strong><p dir="auto">${esc(reRequest(r).text)}</p></div>` : ''}
       ${r.files.length ? `<ul class="files">${r.files.map(f => `<li class="${f.rejected ? 'rejected' : ''}"><div>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}
-        ${f.invoiceNo ? `<small class="inv-no">Invoice no. <b>${esc(f.invoiceNo)}</b></small>` : ''}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
+        ${f.gone ? `<small class="gone-note">Deleted in Drive. Ask whoever uploaded it to restore it from their Drive trash, or delete it here.</small>` : ''}${f.invoiceNo ? `<small class="inv-no">Invoice no. <b>${esc(f.invoiceNo)}</b></small>` : ''}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
         ${f.url ? `<button class="btn ghost" data-act="preview" data-id="${r.id}" data-file="${esc(f.id)}">Preview</button>` : ''}<button class="btn ghost danger" data-act="remove-file" data-id="${r.id}" data-file="${esc(f.id)}">Delete</button></li>`).join('')}</ul>` : ''}
       ${previewHtml(r)}
       <div class="dropzone" data-drop-row="${r.id}">Drop ${r.files.length ? 'another file' : 'the invoice'} here or <button data-act="attach" data-id="${r.id}">choose a file</button></div>
@@ -1081,6 +1087,18 @@ const actions = {
       toast(r.renamed + r.moved + r.missing ? `${r.renamed} renamed, ${r.moved} moved, ${r.missing} missing from Drive` : 'The Drive folder is in order'); }
     catch (e) { toast(e.message, true); el.disabled = false; el.textContent = 'Check the folder now'; }
   },
+  'fill-nos': async el => {
+    el.disabled = true; el.textContent = 'Reading\u2026'; let found = 0;
+    try {
+      for (;;) {
+        const r = await call('fillInvoiceNos'); replaceRows(r.rows); found += r.found;
+        if (!r.left) break;
+        el.textContent = `Reading\u2026 ${r.left} left`;
+      }
+      toast(found ? `Found ${found} invoice ${found === 1 ? 'number' : 'numbers'}` : 'No new invoice numbers found');
+    } catch (e) { toast(e.message, true); }
+    el.disabled = false; el.textContent = 'Read numbers';
+  },
   'send-summary': async el => {
     el.disabled = true;
     try { const em = $('#sumEmail').value; if (em !== (S.summary || {}).email) S.summary = await call('saveSummary', em, $('#sumOn').checked);
@@ -1258,6 +1276,7 @@ function settingsHtml(){
       <form class="set-row stack" data-form="folder"><div><b>Move to another folder</b><p>Paste the link of a Drive folder. Existing invoices stay where they are.</p></div>
         <div class="inline"><input id="folderLink" placeholder="Paste the folder link from Google Drive" autocomplete="off" required aria-label="Drive folder link"><button class="btn" type="submit">Move</button></div><p class="err"></p></form>
       <div class="set-row"><div><b>Tidy up</b><p>Fixes file names, moves misplaced files and notices deleted ones. Runs on its own every 15 minutes.</p></div><button class="btn" data-act="sync">Check now</button></div>
+      <div class="set-row"><div><b>Invoice numbers</b><p>Read the invoice number of invoices attached before Oak could read them.</p></div><button class="btn" data-act="fill-nos">Read numbers</button></div>
       <div class="set-row"><div><b>Files already in the folder</b><p>Match files that aren't attached yet to their charges.</p></div><button class="btn" data-act="drive-match">Match files</button></div>
       ${S.sheetUrl ? `<div class="set-row"><div><b>Data sheet</b><p>Every charge, plus a log of who did what.</p></div><a class="btn" href="${esc(S.sheetUrl)}" target="_blank" rel="noopener">Open sheet</a></div>` : ''}
     </div></section>
@@ -1802,7 +1821,8 @@ const Demo = (() => {
     readInvoice: id => wait({text:'', invoiceNo:'INV-' + (1000 + [...(staged[id] || id)].reduce((n, c) => n + c.charCodeAt(0), 0) % 9000)}),
     attachExisting: (id, fid, no) => { const r = find(id); r.files.push({id:fid, name:r.date + ' ' + r.merchant + '.pdf', url:null, by:me, at:new Date().toISOString(), invoiceNo:no || ''}); r.status = 'Done'; return wait(touch(r)); },
     requestAgain: (id, t) => { const r = find(id); r.files.forEach(f => { f.rejected = true; f.rejectReason = t; }); r.notes.push({by:me, at:new Date().toISOString(), text:t, kind:'request'}); r.status = 'Missing'; return wait(touch(r)); },
-    syncDrive: () => wait({renamed:0, moved:0, missing:0, rows})
+    syncDrive: () => wait({renamed:0, moved:0, missing:0, rows}),
+    fillInvoiceNos: () => { const changed = rows.filter(r => r.files.some(f => f.invoiceNo == null)); changed.forEach(r => r.files.forEach(f => { if (f.invoiceNo == null) f.invoiceNo = 'INV-' + (2000 + rows.indexOf(r)); })); return wait({left:0, found:changed.length, rows:changed}); }
   };
 })();
 

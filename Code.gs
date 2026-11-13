@@ -204,7 +204,7 @@ function deleteCharge(rowId) {
 }
 
 /** Re-checks every attached file: renames to the house format, moves to the right month folder,
- *  and drops links to files someone deleted in Drive (the charge goes back to Missing). */
+ *  and flags files someone deleted in Drive. A flagged charge stays as it is until a person decides. */
 function syncDrive() {
   auth_();
   return withLock_(function () {
@@ -217,24 +217,21 @@ function syncDrive() {
       if (!r.files.length) return;
       let ch = false;
       const target = folders[r.month] || (folders[r.month] = monthFolder_(r.month));
-      r.files = r.files.filter(function (f, i) {
+      r.files.forEach(function (f, i) {
         let file;
         try { file = DriveApp.getFileById(f.id); if (file.isTrashed()) throw new Error('trashed'); }
-        catch (e) { missing++; ch = true; return false; }
+        catch (e) { if (!f.gone) { f.gone = true; missing++; ch = true; } return; }
+        if (f.gone) { delete f.gone; ch = true; }
         const want = invoiceName_(r, f.original || file.getName(), i);
         if (file.getName() !== want) { file.setName(want); f.name = want; renamed++; ch = true; }
         const parents = file.getParents();
         if (!parents.hasNext() || parents.next().getId() !== target.getId()) { file.moveTo(target); moved++; }
         f.url = file.getUrl();
-        return true;
       });
-      if (ch) {
-        if (!r.files.length) r.status = 'Missing';
-        writeRow_(sh, r);
-      }
+      if (ch) writeRow_(sh, r);
     });
     PROPS.setProperty('lastSync', String(Date.now()));
-    if (renamed || moved || missing) log_('sync drive', '', renamed + ' renamed, ' + moved + ' moved, ' + missing + ' gone');
+    if (renamed || moved || missing) log_('sync drive', '', renamed + ' renamed, ' + moved + ' moved, ' + missing + ' deleted in Drive');
     return { renamed: renamed, moved: moved, missing: missing, rows: readRows_(sh).map(clean_) };
   });
 }
