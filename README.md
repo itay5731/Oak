@@ -26,12 +26,13 @@ everyone holding a company card.
 - **Drop the invoices, Oak sorts them.** Drop one file or a whole pile anywhere on the page, or tap **Upload
   invoices** on your phone. Oak reads each one, scans and photos included, finds the amount, vendor, date and
   invoice number, and attaches it to its charge. Only the files it isn't sure about wait for you to pick.
-- **Invoice numbers, kept.** Each invoice number shows on its charge in the list, is saved in the data sheet, and
+- **Invoice numbers, kept.** Each invoice number has its own column in the list, is saved in the data sheet, and
   you can search by it. Drop the same invoice twice and Oak tells you instead of attaching it again. For invoices
   attached earlier, **Settings → Drive → Read numbers** fills them in.
 - **Your Drive stays tidy.** Every invoice is saved to your Drive folder, renamed to
   `2026-10-21 LINEAR APP 19.00 USD.pdf` and sorted into a folder per month. Delete it in Oak and it moves to Drive's trash too.
 - **Done means done.** Once a charge has its invoice it's marked done, so nobody goes looking for it again.
+- **Or lost.** If an invoice can't be found, mark the charge as **Lost**. It stops counting as missing and has its own tab.
 - **Request again.** Got a receipt instead of a tax invoice? Reopen the charge with a reason ("This is a receipt,
   not an invoice") and the person who uploaded it sees what to send.
 - **One person per charge.** Assign whoever has to find it. Filter by vendor, person, currency, type or status,

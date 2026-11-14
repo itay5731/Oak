@@ -114,6 +114,7 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 /* toolbar */
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 0}
 .tools .add-row{margin-left:auto}
+.c.invno{color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .files .inv-no{display:block}
 .files .inv-no b{font-weight:500;color:var(--text)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
@@ -138,7 +139,7 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 
 /* table */
 .table{border-top:1px solid var(--line)}
-.tr{display:grid;grid-template-columns:var(--grid,40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px);align-items:center;min-height:48px;border-bottom:1px solid var(--line);position:relative}
+.tr{display:grid;grid-template-columns:var(--grid,40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) minmax(110px,.8fr) 156px);align-items:center;min-height:48px;border-bottom:1px solid var(--line);position:relative}
 .tr.th{min-height:36px;font-size:12px;color:var(--text-3);font-weight:500;position:sticky;top:56px;z-index:5;background:var(--bg)}
 .c{padding:0 10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c.r{text-align:right}
@@ -172,6 +173,8 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 .inv.missing{border:1px dashed var(--miss-line);background:transparent;color:var(--miss)}
 .inv.missing:hover{background:var(--miss-soft);border-style:solid}
 .inv.done{background:var(--done-soft);color:var(--done);border:1px solid transparent}
+.inv.lost{background:transparent;color:var(--text-2);border:1px solid var(--line-2)}
+.pill.lost{color:var(--text-2);background:var(--line)}
 .files .gone-note{display:block}
 a.inv.done:hover{border-color:currentColor}
 .inv.again{border:1px solid var(--text);background:var(--raised);color:var(--text)}
@@ -408,7 +411,7 @@ body:has(.selbar) .toast{bottom:84px}
 @media (max-width:1180px){
   .tr{grid-template-columns:40px 62px minmax(150px,1.5fr) 100px 0 minmax(80px,.8fr) 130px 0 150px}
   .tr > .c:nth-child(5),.tr > .c:nth-child(8){padding:0;visibility:hidden}
-  .c.x{display:none}
+  .c.x,.tr > .invno{display:none}
 }
 @media (max-width:760px){
   .tools [data-act="cols"]{display:none}
@@ -589,7 +592,8 @@ const I = {
 };
 
 /* ================= data selection ================= */
-const isDone = r => r.status === 'Done';
+const isDone = r => r.status === 'Done' || r.status === 'Lost';
+const isLost = r => r.status === 'Lost';
 /* The latest "request again" note, if the charge is waiting for a better file. */
 const reRequest = r => { if (isDone(r)) return null; const n = r.notes.filter(x => x.kind === 'request').pop(); const f = r.files.filter(x => !x.rejected).length; return n && !f ? n : null; };
 function months(){
@@ -617,7 +621,7 @@ function visible(){
   const k = S.sort.key, d = S.sort.dir;
   return inMonth()
     .filter(r => passFilters(r))
-    .filter(r => S.status === 'all' || (S.status === 'missing') !== isDone(r))
+    .filter(r => S.status === 'all' || (S.status === 'missing' ? !isDone(r) : S.status === 'lost' ? isLost(r) : r.status === 'Done'))
     .sort((a, b) => {
       let x = a[k], y = b[k];
       if (k === 'amount') { x = +a.charged || +a.amount || 0; y = +b.charged || +b.amount || 0; }
@@ -724,7 +728,8 @@ function renderList(){
   renderHead();
   const scope = inMonth().filter(r => passFilters(r));
   const nMiss = scope.filter(r => !isDone(r)).length;
-  $('#seg').innerHTML = [['missing', 'Missing', nMiss], ['done', 'Done', scope.length - nMiss], ['all', 'All', scope.length]]
+  const nLost = scope.filter(isLost).length;
+  $('#seg').innerHTML = [['missing', 'Missing', nMiss], ['done', 'Done', scope.length - nMiss - nLost], ...(nLost || S.status === 'lost' ? [['lost', 'Lost', nLost]] : []), ['all', 'All', scope.length]]
     .map(([k, l, n]) => `<button data-act="status" data-v="${k}" aria-pressed="${S.status === k}">${l}<span class="n">${n}</span></button>`).join('');
   renderChips();
   const rows = visible();
@@ -736,7 +741,7 @@ function renderList(){
   const allSel = rows.length && rows.every(r => S.sel.has(r.id));
   const sortBtn = (k, label) => `<button class="sort" data-act="sort" data-v="${k}" ${S.sort.key === k ? 'data-on' : ''}>${label}${S.sort.key === k ? (S.sort.dir < 0 ? I.down : I.up) : ''}</button>`;
   const xs = shownExtras();
-  const grid = '40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px'.replace(/ 156px$/, xs.map(() => ' minmax(100px,1fr)').join('') + ' 156px');
+  const grid = '40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px'.replace(/ 156px$/, xs.map(() => ' minmax(100px,1fr)').join('') + ' minmax(110px,.8fr) 156px');
   list.innerHTML = `<div class="table" role="table" aria-label="Charges" style="--grid:${grid}">
     <div class="tr th" role="row">
       <div class="c" role="columnheader"><input type="checkbox" class="cb" data-act="sel-all" ${allSel ? 'checked' : ''} aria-label="Select all shown"></div>
@@ -748,6 +753,7 @@ function renderList(){
       <div class="c" role="columnheader">${sortBtn('owner', 'Responsible')}</div>
       <div class="c" role="columnheader">Note</div>
       ${xs.map(k => `<div class="c x" role="columnheader" dir="auto">${esc(k)}</div>`).join('')}
+      <div class="c invno" role="columnheader">Invoice no.</div>
       <div class="c" role="columnheader">Invoice</div>
     </div>
     ${rows.map(rowHtml).join('') || `<div class="empty-state"><h3>${S.status === 'missing' && !hasFilters() ? 'Nothing missing here' : 'No charges match'}</h3><p>${hasFilters() ? 'Try removing a filter.' : S.status === 'missing' ? 'Every charge this month has an invoice.' : ''}</p>${hasFilters() ? '<button class="btn" data-act="clear-filters">Clear filters</button>' : ''}</div>`}
@@ -758,9 +764,11 @@ function rowHtml(r){
   const done = isDone(r);
   const last = reRequest(r) || r.notes[r.notes.length - 1];
   const live = r.files.filter(f => !f.rejected), f0 = live[0] || r.files[0];
-  const tag = f0 && f0.invoiceNo ? esc(f0.invoiceNo) + (live.length > 1 ? ` +${live.length - 1}` : '') : live.length > 1 ? live.length + ' files' : 'Invoice';
+  const tag = live.length > 1 ? live.length + ' files' : 'Invoice';
+  const nos = live.map(f => f.invoiceNo).filter(Boolean).join(', ');
   const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>`
-    : done && live.length && live.every(f => f.gone) ? `<span class="inv done" title="Removed from the Drive folder">${I.check}${f0.invoiceNo ? tag : 'Done'}</span>`
+    : isLost(r) ? `<span class="inv lost" title="The invoice can't be found">Lost</span>`
+    : done && live.length && live.every(f => f.gone) ? `<span class="inv done" title="Removed from the Drive folder">${I.check}${tag}</span>`
     : done
     ? (f0 && f0.url ? `<a class="inv done" href="${esc(f0.url)}" target="_blank" rel="noopener" title="${esc(f0.name)}">${I.check}${tag}</a>`
                     : `<span class="inv done">${I.check}${f0 ? tag : 'Done'}</span>`)
@@ -777,6 +785,7 @@ function rowHtml(r){
     <div class="c" role="cell"><button class="who ${r.owner ? '' : 'none'}" data-act="assign" data-id="${r.id}">${avatar(r.owner)}<span>${r.owner ? esc(person(r.owner)) : 'Assign'}</span></button></div>
     <div class="c note" role="cell" dir="auto" title="${last ? esc(last.text) : ''}">${last ? esc(last.text) : ''}</div>
     ${shownExtras().map(k => `<div class="c x muted" role="cell" dir="auto">${esc((r.extra || {})[k] || '')}</div>`).join('')}
+    <div class="c invno num" role="cell" title="${esc(nos)}">${esc(nos)}</div>
     <div class="c" role="cell">${inv}<span class="drophint">Drop to attach</span></div>
   </div>`;
 }
@@ -800,6 +809,7 @@ function renderLayer(){
       <button class="btn" data-act="assign-many">${I.person}Assign</button>
       <button class="btn" data-act="many-done">Mark done</button>
       <button class="btn" data-act="many-missing">Mark missing</button>
+      <button class="btn" data-act="many-lost">Mark lost</button>
       <button class="btn" data-act="sel-clear" aria-label="Clear selection">${I.x}</button></div>`;
   if (S.pop) h += popHtml();
   if (S.modal) h += `<div class="modal-wrap ${S.modal.shown ? '' : 'enter'}" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true">${S.modal.html()}</div></div>`;
@@ -825,7 +835,7 @@ function paneHtml(r){
       <div><dt>Responsible</dt><dd><button class="who ${r.owner ? '' : 'none'}" data-act="assign" data-id="${r.id}" style="margin-left:-4px">${avatar(r.owner)}<span>${r.owner ? esc(person(r.owner)) : 'Assign someone'}</span></button></dd></div>
     </dl>
     <section>
-      <h3>Invoice <span class="pill ${done ? 'done' : 'missing'}">${done ? I.check + 'Done' : 'Missing'}</span></h3>
+      <h3>Invoice <span class="pill ${isLost(r) ? 'lost' : done ? 'done' : 'missing'}">${isLost(r) ? 'Lost' : done ? I.check + 'Done' : 'Missing'}</span></h3>
       ${reRequest(r) ? `<div class="again-box"><strong>${I.redo} Requested again by ${esc(person(reRequest(r).by))}</strong><p dir="auto">${esc(reRequest(r).text)}</p></div>` : ''}
       ${r.files.length ? `<ul class="files">${r.files.map(f => `<li class="${f.rejected ? 'rejected' : ''}"><div>${f.url && !f.gone ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}
         ${f.gone ? `<small class="gone-note">Removed from the Drive folder</small>` : ''}${f.invoiceNo ? `<small class="inv-no">Invoice no. <b>${esc(f.invoiceNo)}</b></small>` : ''}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
@@ -835,6 +845,7 @@ function paneHtml(r){
       <div class="status-line">
         <span class="muted" style="font-size:13px">${r.updatedBy ? `Last change by ${esc(person(r.updatedBy))}, ${fmtWhen(r.updatedAt)}` : ''}</span>
         <span style="display:flex;gap:6px">${done && r.files.some(f => !f.rejected) ? `<button class="btn" data-act="again-open" data-id="${r.id}">${I.redo}Request again</button>` : ''}
+        ${done ? '' : `<button class="btn" data-act="set-lost" data-id="${r.id}">Mark as lost</button>`}
         <button class="btn" data-act="toggle-status" data-id="${r.id}">${done ? 'Mark as missing' : 'Mark done without a file'}</button></span>
       </div>
       ${S.againFor === r.id ? `<form class="again-form" data-form="again" data-id="${r.id}">
@@ -1062,6 +1073,12 @@ const actions = {
   },
   'many-done': () => bulk([...S.sel], 'status', 'Done', `Marked ${S.sel.size} as done`),
   'many-missing': () => bulk([...S.sel], 'status', 'Missing', `Marked ${S.sel.size} as missing`),
+  'many-lost': () => bulk([...S.sel], 'status', 'Lost', `Marked ${S.sel.size} as lost`),
+  'set-lost': async el => {
+    const r = S.rows.find(x => x.id === el.dataset.id), before = missingIn(r.month);
+    try { replaceRows([await call('setStatus', r.id, 'Lost')]); renderLayer(); settle([r.id], r.month, before); toast(`${r.merchant} marked as lost`); }
+    catch (e) { toast(e.message, true); }
+  },
   attach: el => { attachTarget = el.dataset.id; $('#fileAttach').value = ''; $('#fileAttach').click(); },
   'toggle-status': async el => {
     const r = S.rows.find(x => x.id === el.dataset.id);
@@ -1323,7 +1340,7 @@ function settle(ids, month, before){
     if (!r || !tr) return;
     const cell = tr.querySelector('.c:last-child');
     if (isDone(r)) {
-      cell.innerHTML = `<span class="inv done">${I.check}${r.files.length ? 'Invoice' : 'Done'}</span>`;
+      cell.innerHTML = isLost(r) ? `<span class="inv lost">Lost</span>` : `<span class="inv done">${I.check}${r.files.length ? 'Invoice' : 'Done'}</span>`;
       tr.classList.remove('is-miss'); tr.classList.add('just-done');
       if (S.status === 'missing') leaving.push(tr);
     } else if (S.status === 'done') leaving.push(tr);
@@ -1814,7 +1831,7 @@ const Demo = (() => {
     addNote: (id, t) => { const r = find(id); r.notes.push({by:me, at:new Date().toISOString(), text:t}); return wait(touch(r)); },
     updateMany: (ids, field, v) => wait(ids.map(id => touch(Object.assign(find(id), {[field]:v})))),
     saveSummary: (email, on) => wait({email, on}),
-    sendMonthlySummary: () => wait({sent:true, count:rows.filter(r => r.status !== 'Done').length}),
+    sendMonthlySummary: () => wait({sent:true, count:rows.filter(r => r.status !== 'Done' && r.status !== 'Lost').length}),
     listLooseFiles: () => wait([{id:'d1', name:'holafly receipt 22.00.pdf', type:'application/pdf', url:null}, {id:'d2', name:'github-invoice-44.00.pdf', type:'application/pdf', url:null}, {id:'d3', name:'IMG_2041.jpg', type:'image/jpeg', url:null}]),
     stageFile: f => { const id = 's' + Date.now() + Math.random().toString(36).slice(2, 6); staged[id] = f.name; return wait({id, name:f.name, url:null}); },
     readInvoice: id => wait({text:'', invoiceNo:'INV-' + (1000 + [...(staged[id] || id)].reduce((n, c) => n + c.charCodeAt(0), 0) % 9000)}),

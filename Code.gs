@@ -306,7 +306,7 @@ function updateMany(rowIds, field, value) {
     const out = [];
     readRows_(sh).forEach(function (r) {
       if (!ids[r.id]) return;
-      r[field] = field === 'status' ? (value === 'Done' ? 'Done' : 'Missing') : String(value || '').trim();
+      r[field] = field === 'status' ? status_(value) : String(value || '').trim();
       touch_(r); writeRow_(sh, r); out.push(clean_(r));
     });
     log_(field, rowIds.length + ' rows', value);
@@ -314,12 +314,17 @@ function updateMany(rowIds, field, value) {
   });
 }
 
+/** Done, Lost (the invoice can't be found) or Missing. */
+function status_(s) {
+  return s === 'Done' || s === 'Lost' ? s : 'Missing';
+}
+
 function setStatus(rowId, status) {
   auth_();
   return withLock_(function () {
     const sh = sheet_();
     const r = findRow_(sh, rowId);
-    r.status = status === 'Done' ? 'Done' : 'Missing';
+    r.status = status_(status);
     touch_(r); writeRow_(sh, r);
     log_('status', r.id, r.status);
     return clean_(r);
@@ -377,7 +382,7 @@ function sendMonthlySummary() {
   auth_();
   const to = PROPS.getProperty('summaryEmail');
   if (!to) throw new Error('Add the CFO\'s email in Settings first.');
-  const rows = readRows_().filter(function (r) { return r.status !== 'Done'; });
+  const rows = readRows_().filter(function (r) { return r.status !== 'Done' && r.status !== 'Lost'; });
   const url = ScriptApp.getService().getUrl();
   const esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   const money = function (n, cur) { return n == null || isNaN(n) ? '' : (cur || '') + ' ' + Number(n).toFixed(2); };
