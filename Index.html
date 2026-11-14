@@ -496,7 +496,7 @@ function call(name, ...args){
     .withFailureHandler(e => rej(new Error((e && e.message) || String(e))))[name](...args));
 }
 /* The Excel reader loads only when needed, so a slow CDN never blocks the app. */
-const LIBS = {xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'};
+const LIBS = {xlsx:'https:\/\/cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'};
 function lib(name){
   if (name === 'xlsx' && window.XLSX) return Promise.resolve();
   return new Promise((res, rej) => {
@@ -767,7 +767,7 @@ function rowHtml(r){
   const tag = live.length > 1 ? live.length + ' files' : 'Invoice';
   const nos = live.map(f => f.invoiceNo).filter(Boolean).join(', ');
   const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>`
-    : isLost(r) ? `<span class="inv lost" title="The invoice can't be found">Lost</span>`
+    : isLost(r) ? `<span class="inv lost" title="The invoice cannot be found">Lost</span>`
     : done && live.length && live.every(f => f.gone) ? `<span class="inv done" title="Removed from the Drive folder">${I.check}${tag}</span>`
     : done
     ? (f0 && f0.url ? `<a class="inv done" href="${esc(f0.url)}" target="_blank" rel="noopener" title="${esc(f0.name)}">${I.check}${tag}</a>`
@@ -874,7 +874,7 @@ function previewFile(r){
   const live = r.files.filter(f => f.url);
   return live.find(f => f.id === (S.preview || {})[r.id]) || live.find(f => !f.rejected) || live[0] || null;
 }
-const previewUrl = f => 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/preview';
+const previewUrl = f => 'https:\/\/drive.google.com/file/d/' + encodeURIComponent(f.id) + '/preview';
 function previewHtml(r){
   const f = previewFile(r);
   if (!f) return '';
