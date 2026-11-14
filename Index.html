@@ -1086,16 +1086,17 @@ const actions = {
     catch (e) { toast(e.message, true); el.disabled = false; el.textContent = 'Check the folder now'; }
   },
   'fill-nos': async el => {
-    el.disabled = true; el.textContent = 'Reading\u2026'; let found = 0;
+    el.disabled = true; let found = 0, tried = [];
     try {
+      working('Reading invoice numbers\u2026');
       for (;;) {
-        const r = await call('fillInvoiceNos'); replaceRows(r.rows); found += r.found;
+        const r = await call('fillInvoiceNos', tried); replaceRows(r.rows); found += r.found; tried = tried.concat(r.tried);
         if (!r.left) break;
-        el.textContent = `Reading\u2026 ${r.left} left`;
+        working(`Reading invoice numbers, ${r.left} left\u2026`);
       }
       toast(found ? `Found ${found} invoice ${found === 1 ? 'number' : 'numbers'}` : 'No new invoice numbers found');
     } catch (e) { toast(e.message, true); }
-    el.disabled = false; el.textContent = 'Read numbers';
+    working(''); el.disabled = false;
   },
   'send-summary': async el => {
     el.disabled = true;
@@ -1820,7 +1821,7 @@ const Demo = (() => {
     attachExisting: (id, fid, no) => { const r = find(id); r.files.push({id:fid, name:r.date + ' ' + r.merchant + '.pdf', url:null, by:me, at:new Date().toISOString(), invoiceNo:no || ''}); r.status = 'Done'; return wait(touch(r)); },
     requestAgain: (id, t) => { const r = find(id); r.files.forEach(f => { f.rejected = true; f.rejectReason = t; }); r.notes.push({by:me, at:new Date().toISOString(), text:t, kind:'request'}); r.status = 'Missing'; return wait(touch(r)); },
     syncDrive: () => wait({renamed:0, moved:0, missing:0, rows}),
-    fillInvoiceNos: () => { const changed = rows.filter(r => r.files.some(f => f.invoiceNo == null)); changed.forEach(r => r.files.forEach(f => { if (f.invoiceNo == null) f.invoiceNo = 'INV-' + (2000 + rows.indexOf(r)); })); return wait({left:0, found:changed.length, rows:changed}); }
+    fillInvoiceNos: () => { const changed = rows.filter(r => r.files.some(f => !f.invoiceNo)); changed.forEach(r => r.files.forEach(f => { if (!f.invoiceNo) f.invoiceNo = 'INV-' + (2000 + rows.indexOf(r)); })); return wait({left:0, tried:[], found:changed.length, rows:changed}); }
   };
 })();
 

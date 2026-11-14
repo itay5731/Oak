@@ -39,23 +39,24 @@ function ocrText_(fileId) {
   }
 }
 
-/** Reads the invoice number of files attached before Oak could read them. Call again until left is 0. */
-function fillInvoiceNos() {
+/** Reads the invoice number of files that don't have one yet. Pass back the ids already tried, until left is 0. */
+function fillInvoiceNos(tried) {
   auth_();
-  const start = Date.now(), found = {}, todo = [];
-  readRows_().forEach(function (r) { r.files.forEach(function (f) { if (f.invoiceNo == null && !f.gone) todo.push(f.id); }); });
+  const skip = {}, found = {}, todo = [], start = Date.now();
+  (tried || []).forEach(function (id) { skip[id] = true; });
+  readRows_().forEach(function (r) { r.files.forEach(function (f) { if (!f.invoiceNo && !f.gone && !skip[f.id]) todo.push(f.id); }); });
   let i = 0;
-  for (; i < todo.length && Date.now() - start < 90000; i++) {
+  for (; i < todo.length && Date.now() - start < 30000; i++) {
     try { found[todo[i]] = findInvoiceNo_(ocrText_(todo[i])); } catch (e) { found[todo[i]] = ''; }
   }
   return withLock_(function () {
     const sh = sheet_(), changed = [];
     readRows_(sh).forEach(function (r) {
       let ch = false;
-      r.files.forEach(function (f) { if (f.id in found && f.invoiceNo == null) { f.invoiceNo = found[f.id]; ch = true; } });
+      r.files.forEach(function (f) { if (found[f.id]) { f.invoiceNo = found[f.id]; ch = true; } });
       if (ch) { writeRow_(sh, r); changed.push(clean_(r)); }
     });
-    return { left: todo.length - i, found: Object.keys(found).filter(function (k) { return found[k]; }).length, rows: changed };
+    return { left: todo.length - i, tried: todo.slice(0, i), found: Object.keys(found).filter(function (k) { return found[k]; }).length, rows: changed };
   });
 }
 
