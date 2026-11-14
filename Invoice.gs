@@ -44,9 +44,9 @@ function fillInvoiceNos(tried) {
   auth_();
   const skip = {}, found = {}, todo = [], start = Date.now();
   (tried || []).forEach(function (id) { skip[id] = true; });
-  readRows_().forEach(function (r) { r.files.forEach(function (f) { if (!f.invoiceNo && !f.gone && !skip[f.id]) todo.push(f.id); }); });
+  readRows_().forEach(function (r) { r.files.forEach(function (f) { if (!f.invoiceNo && !f.gone && !f.manual && !skip[f.id]) todo.push(f.id); }); });
   let i = 0;
-  for (; i < todo.length && Date.now() - start < 30000; i++) {
+  for (; i < todo.length && Date.now() - start < 12000; i++) {
     try { found[todo[i]] = findInvoiceNo_(ocrText_(todo[i])); } catch (e) { found[todo[i]] = ''; }
   }
   return withLock_(function () {
@@ -57,6 +57,22 @@ function fillInvoiceNos(tried) {
       if (ch) { writeRow_(sh, r); changed.push(clean_(r)); }
     });
     return { left: todo.length - i, tried: todo.slice(0, i), found: Object.keys(found).filter(function (k) { return found[k]; }).length, rows: changed };
+  });
+}
+
+/** A person fixing or adding the invoice number by hand. Automatic reading never overwrites it. */
+function setInvoiceNo(rowId, fileId, value) {
+  auth_();
+  return withLock_(function () {
+    const sh = sheet_();
+    const r = findRow_(sh, rowId);
+    const f = r.files.filter(function (x) { return x.id === fileId; })[0];
+    if (!f) throw new Error('That file is no longer on this charge.');
+    f.invoiceNo = String(value || '').trim().slice(0, 60);
+    f.manual = true;
+    touch_(r); writeRow_(sh, r);
+    log_('invoice no', r.id, f.invoiceNo);
+    return clean_(r);
   });
 }
 

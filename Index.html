@@ -114,9 +114,17 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 /* toolbar */
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 0}
 .tools .add-row{margin-left:auto}
-.c.invno{color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.files .inv-no{display:block}
-.files .inv-no b{font-weight:500;color:var(--text)}
+.c.invno{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.copy-no{font:inherit;color:var(--text-2);background:none;border:0;padding:2px 4px;margin:0 -4px;border-radius:5px;cursor:copy}
+.copy-no:hover{background:var(--line);color:var(--text)}
+.inv-edit{font:inherit;background:none;border:0;padding:0;color:var(--accent);cursor:pointer}
+.inv-edit:hover{text-decoration:underline}
+.inv-no-edit{display:flex;gap:6px;margin:6px 0 4px}
+.inv-no-edit input{flex:1;min-width:0;height:32px;border:1px solid var(--line-2);border-radius:8px;padding:0 10px;background:var(--raised);color:inherit;font:inherit}
+.files .inv-no .copy-no{font-size:15px;font-weight:600;color:var(--text);background:var(--accent-soft);padding:3px 8px;margin:0;border-radius:6px;letter-spacing:.01em}
+.files .inv-no .copy-no:hover{background:var(--line)}
+.files .inv-no{display:flex;align-items:center;gap:8px;margin:8px 0 6px;color:var(--text-3)}
+
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .field select{width:100%;height:38px;border:1px solid var(--line-2);border-radius:9px;padding:0 10px;background:var(--raised);color:inherit;font:inherit}
 .field .opt{font-weight:400;color:var(--text-3)}
@@ -139,7 +147,7 @@ kbd{font:500 11px var(--font);color:var(--text-3);border:1px solid var(--line-2)
 
 /* table */
 .table{border-top:1px solid var(--line)}
-.tr{display:grid;grid-template-columns:var(--grid,40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) minmax(110px,.8fr) 156px);align-items:center;min-height:48px;border-bottom:1px solid var(--line);position:relative}
+.tr{display:grid;grid-template-columns:var(--grid,40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) minmax(150px,1fr) 156px);align-items:center;min-height:48px;border-bottom:1px solid var(--line);position:relative}
 .tr.th{min-height:36px;font-size:12px;color:var(--text-3);font-weight:500;position:sticky;top:56px;z-index:5;background:var(--bg)}
 .c{padding:0 10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c.r{text-align:right}
@@ -375,7 +383,13 @@ body.dragging .dock{transform:translate(-50%,0)}
 .dock.over{border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
 .dock strong{display:block;font-weight:600}
 .dock span{color:var(--text-2);font-size:13px}
-#working{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line-2);box-shadow:0 8px 28px rgba(0,0,0,.12);padding:10px 16px;border-radius:10px;z-index:89;font-size:13.5px}
+#working{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100vw - 32px));background:var(--raised);border:1px solid var(--line-2);box-shadow:0 8px 28px rgba(0,0,0,.12);padding:12px 16px;border-radius:10px;z-index:89;font-size:13.5px}
+.w-top{display:flex;justify-content:space-between;gap:16px}
+.w-pct{color:var(--text-3);font-variant-numeric:tabular-nums}
+.w-bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.w-bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px;transition:width .4s ease}
+#working.indet .w-bar i{width:30%;animation:indet 1.2s ease-in-out infinite}
+@keyframes indet{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:90;max-width:min(460px,calc(100vw - 32px));box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;animation:rise .18s ease-out}
 .toast.bad{background:var(--danger);color:#fff}
 body:has(.selbar) .toast{bottom:84px}
@@ -741,7 +755,7 @@ function renderList(){
   const allSel = rows.length && rows.every(r => S.sel.has(r.id));
   const sortBtn = (k, label) => `<button class="sort" data-act="sort" data-v="${k}" ${S.sort.key === k ? 'data-on' : ''}>${label}${S.sort.key === k ? (S.sort.dir < 0 ? I.down : I.up) : ''}</button>`;
   const xs = shownExtras();
-  const grid = '40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px'.replace(/ 156px$/, xs.map(() => ' minmax(100px,1fr)').join('') + ' minmax(110px,.8fr) 156px');
+  const grid = '40px 74px minmax(160px,1.5fr) 104px 100px minmax(90px,.8fr) 140px minmax(120px,1.3fr) 156px'.replace(/ 156px$/, xs.map(() => ' minmax(100px,1fr)').join('') + ' minmax(150px,1fr) 156px');
   list.innerHTML = `<div class="table" role="table" aria-label="Charges" style="--grid:${grid}">
     <div class="tr th" role="row">
       <div class="c" role="columnheader"><input type="checkbox" class="cb" data-act="sel-all" ${allSel ? 'checked' : ''} aria-label="Select all shown"></div>
@@ -765,7 +779,6 @@ function rowHtml(r){
   const last = reRequest(r) || r.notes[r.notes.length - 1];
   const live = r.files.filter(f => !f.rejected), f0 = live[0] || r.files[0];
   const tag = live.length > 1 ? live.length + ' files' : 'Invoice';
-  const nos = live.map(f => f.invoiceNo).filter(Boolean).join(', ');
   const inv = S.busy.has(r.id) ? `<span class="inv busy"><span class="spin"></span>Uploading</span>`
     : isLost(r) ? `<span class="inv lost" title="The invoice cannot be found">Lost</span>`
     : done && live.length && live.every(f => f.gone) ? `<span class="inv done" title="Removed from the Drive folder">${I.check}${tag}</span>`
@@ -785,7 +798,7 @@ function rowHtml(r){
     <div class="c" role="cell"><button class="who ${r.owner ? '' : 'none'}" data-act="assign" data-id="${r.id}">${avatar(r.owner)}<span>${r.owner ? esc(person(r.owner)) : 'Assign'}</span></button></div>
     <div class="c note" role="cell" dir="auto" title="${last ? esc(last.text) : ''}">${last ? esc(last.text) : ''}</div>
     ${shownExtras().map(k => `<div class="c x muted" role="cell" dir="auto">${esc((r.extra || {})[k] || '')}</div>`).join('')}
-    <div class="c invno num" role="cell" title="${esc(nos)}">${esc(nos)}</div>
+    <div class="c invno num" role="cell">${live.filter(f => f.invoiceNo).map(f => `<button class="copy-no" data-act="copy-no" data-v="${esc(f.invoiceNo)}" title="Copy">${esc(f.invoiceNo)}</button>`).join(' ')}</div>
     <div class="c" role="cell">${inv}<span class="drophint">Drop to attach</span></div>
   </div>`;
 }
@@ -838,7 +851,8 @@ function paneHtml(r){
       <h3>Invoice <span class="pill ${isLost(r) ? 'lost' : done ? 'done' : 'missing'}">${isLost(r) ? 'Lost' : done ? I.check + 'Done' : 'Missing'}</span></h3>
       ${reRequest(r) ? `<div class="again-box"><strong>${I.redo} Requested again by ${esc(person(reRequest(r).by))}</strong><p dir="auto">${esc(reRequest(r).text)}</p></div>` : ''}
       ${r.files.length ? `<ul class="files">${r.files.map(f => `<li class="${f.rejected ? 'rejected' : ''}"><div>${f.url && !f.gone ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}
-        ${f.gone ? `<small class="gone-note">Removed from the Drive folder</small>` : ''}${f.invoiceNo ? `<small class="inv-no">Invoice no. <b>${esc(f.invoiceNo)}</b></small>` : ''}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
+        ${f.gone ? `<small class="gone-note">Removed from the Drive folder</small>` : ''}${f.rejected ? '' : S.editNo === f.id ? `<form class="inv-no-edit" data-form="invno" data-id="${r.id}" data-file="${esc(f.id)}"><input id="invNoInput" value="${esc(f.invoiceNo || '')}" placeholder="Invoice number" aria-label="Invoice number" autocomplete="off" maxlength="60"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="edit-no-cancel">Cancel</button></form>`
+          : `<small class="inv-no">${f.invoiceNo ? `Invoice no. <button class="copy-no" data-act="copy-no" data-v="${esc(f.invoiceNo)}" title="Copy">${esc(f.invoiceNo)}</button> ` : ''}<button class="inv-edit" data-act="edit-no" data-file="${esc(f.id)}">${f.invoiceNo ? 'Edit' : 'Add invoice number'}</button></small>`}<small>Uploaded by ${esc(person(f.by))}, ${fmtWhen(f.at)}${f.rejected ? ` <span class="rej">Not accepted: ${esc(f.rejectReason || '')}</span>` : ''}</small></div>
         ${f.url && !f.gone ? `<button class="btn ghost" data-act="preview" data-id="${r.id}" data-file="${esc(f.id)}">Preview</button>` : ''}<button class="btn ghost danger" data-act="remove-file" data-id="${r.id}" data-file="${esc(f.id)}">Delete</button></li>`).join('')}</ul>` : ''}
       ${previewHtml(r)}
       <div class="dropzone" data-drop-row="${r.id}">Drop ${r.files.length ? 'another file' : 'the invoice'} here or <button data-act="attach" data-id="${r.id}">choose a file</button></div>
@@ -1074,17 +1088,14 @@ const actions = {
   'many-done': () => bulk([...S.sel], 'status', 'Done', `Marked ${S.sel.size} as done`),
   'many-missing': () => bulk([...S.sel], 'status', 'Missing', `Marked ${S.sel.size} as missing`),
   'many-lost': () => bulk([...S.sel], 'status', 'Lost', `Marked ${S.sel.size} as lost`),
-  'set-lost': async el => {
-    const r = S.rows.find(x => x.id === el.dataset.id), before = missingIn(r.month);
-    try { replaceRows([await call('setStatus', r.id, 'Lost')]); renderLayer(); settle([r.id], r.month, before); toast(`${r.merchant} marked as lost`); }
-    catch (e) { toast(e.message, true); }
-  },
+  'copy-no': el => copyText(el.dataset.v).then(() => toast(`Copied ${el.dataset.v}`), () => toast('Could not copy. Select the number and copy it by hand.', true)),
+  'set-lost': el => bulk([el.dataset.id], 'status', 'Lost', 'Marked as lost'),
+  'edit-no': el => { S.editNo = el.dataset.file; renderLayer(); const i = $('#invNoInput'); if (i) { i.focus(); i.select(); } },
+  'edit-no-cancel': () => { S.editNo = null; renderLayer(); },
   attach: el => { attachTarget = el.dataset.id; $('#fileAttach').value = ''; $('#fileAttach').click(); },
-  'toggle-status': async el => {
+  'toggle-status': el => {
     const r = S.rows.find(x => x.id === el.dataset.id);
-    const before = missingIn(r.month);
-    try { replaceRows([await call('setStatus', r.id, isDone(r) ? 'Missing' : 'Done')]); renderLayer(); settle([r.id], r.month, before); }
-    catch (e) { toast(e.message, true); }
+    return isDone(r) ? bulk([r.id], 'status', 'Missing', 'Marked as missing') : bulk([r.id], 'status', 'Done', 'Marked as done');
   },
   'remove-file': el => confirmBox('Delete this invoice?', 'The file is moved to the Drive trash. If it was the only invoice, the charge goes back to Missing.', 'Delete invoice', async () => {
     try { replaceRows([await call('removeFile', el.dataset.id, el.dataset.file)]); refresh(); toast('Invoice deleted'); }
@@ -1109,7 +1120,7 @@ const actions = {
       for (;;) {
         const r = await call('fillInvoiceNos', tried); replaceRows(r.rows); found += r.found; tried = tried.concat(r.tried);
         if (!r.left) break;
-        working(`Reading invoice numbers, ${r.left} left\u2026`);
+        working(`Reading invoice numbers, ${r.left} left\u2026`, tried.length / (tried.length + r.left));
       }
       toast(found ? `Found ${found} invoice ${found === 1 ? 'number' : 'numbers'}` : 'No new invoice numbers found');
     } catch (e) { toast(e.message, true); }
@@ -1143,20 +1154,13 @@ const actions = {
   'modal-ok': () => S.modal && S.modal.ok && S.modal.ok()
 };
 async function bulk(ids, field, value, msg){
-  const month = (S.rows.find(r => r.id === ids[0]) || {}).month, before = missingIn(month);
-  if (field === 'owner') {
-    // show the change right away, save in the background, undo if the save fails
-    const prev = {}; ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) { prev[id] = r.owner; r.owner = value; } });
-    refresh(); toast(msg.replace(/\s+/g, ' '));
-    try { replaceRows(await call('updateMany', ids, field, value)); }
-    catch (e) { ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) r.owner = prev[id]; }); refresh(); toast(e.message, true); }
-    return;
-  }
-  try {
-    replaceRows(await call('updateMany', ids, field, value)); toast(msg.replace(/\s+/g, ' '));
-    if (field === 'status') { S.sel.clear(); renderLayer(); settle(ids, month, before); } else refresh();
-  }
-  catch (e) { toast(e.message, true); }
+  /* Show the change right away, save in the background, undo if the save fails. */
+  const month = (S.rows.find(r => r.id === ids[0]) || {}).month, before = missingIn(month), prev = {};
+  ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) { prev[id] = r[field]; r[field] = value; } });
+  toast(msg.replace(/\s+/g, ' '));
+  if (field === 'status') { S.sel.clear(); renderLayer(); settle(ids, month, before); } else refresh();
+  try { replaceRows(await call('updateMany', ids, field, value)); refresh(); }
+  catch (e) { ids.forEach(id => { const r = S.rows.find(x => x.id === id); if (r) r[field] = prev[id]; }); render(); toast(e.message, true); }
 }
 function refresh(){ renderList(); renderLayer(); }
 
@@ -1183,7 +1187,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'sumOn') e.target.form.requestSubmit();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (S.pop) closePop(); else if (S.modal) closeModal(); else if (S.open) { S.open = null; renderLayer(); } }
+  if (e.key === 'Escape') { if (S.pop) closePop(); else if (S.modal) closeModal(); else if (S.editNo) { S.editNo = null; renderLayer(); } else if (S.open) { S.open = null; renderLayer(); } }
   if (e.key === 'Enter' && e.target.matches('[data-pop-q]') && S.pop.type === 'assign') {
     e.preventDefault(); const b = $('.pop [data-act="pick"]'); if (b) b.click();
   }
@@ -1205,6 +1209,15 @@ document.addEventListener('submit', async e => {
     const r0 = S.rows.find(x => x.id === id), before = missingIn(r0.month);
     try { replaceRows([await call('requestAgain', id, text)]); S.againFor = null; refresh(); toast('Requested again. The charge is back in Missing.'); }
     catch (err) { toast(err.message, true); }
+  }
+  if (f.dataset.form === 'invno') {
+    const r = S.rows.find(x => x.id === f.dataset.id), file = r && r.files.find(x => x.id === f.dataset.file);
+    if (!file) return;
+    const prev = file.invoiceNo, value = $('#invNoInput').value.trim();
+    file.invoiceNo = value; S.editNo = null; renderLayer(); refresh();
+    try { replaceRows([await call('setInvoiceNo', r.id, file.id, value)]); toast(value ? `Invoice number saved` : 'Invoice number removed'); }
+    catch (err) { file.invoiceNo = prev; renderLayer(); refresh(); toast(err.message, true); }
+    return;
   }
   if (f.dataset.form === 'add') {
     const v = id => f.querySelector('#' + id).value;
@@ -1679,7 +1692,7 @@ async function autoSort(files){
   const sure = [], review = [], taken = new Set();
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    working(`Reading ${files.length === 1 ? 'the invoice' : `invoice ${i + 1} of ${files.length}`}\u2026`);
+    working(`Reading ${files.length === 1 ? 'the invoice' : `invoice ${i + 1} of ${files.length}`}\u2026`, i / files.length);
     try {
       const staged = await call('stageFile', {name:file.name, type:file.type, data:await readB64(file)});
       const read = await call('readInvoice', staged.id);
@@ -1695,11 +1708,29 @@ async function autoSort(files){
   if (review.length) matchDialog(review.map(it => ({...it, getText:async () => it.text, attach:rowId => attachStaged(it, rowId)})),
     `${sure.length ? `Oak attached ${sure.length}. ` : ''}Pick the charge for ${review.length === 1 ? 'this one' : 'these'}. Files you don't attach stay in the Drive folder.`);
 }
-function working(msg){
+function copyText(text){
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).catch(() => copyByHand(text));
+  return copyByHand(text);
+}
+function copyByHand(text){
+  const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(t); t.select();
+  const ok = document.execCommand('copy'); t.remove();
+  return ok ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+}
+function working(msg, frac){
   let p = $('#working');
   if (!msg) return p && p.remove();
-  if (!p) { p = document.createElement('div'); p.id = 'working'; p.setAttribute('role', 'status'); document.body.appendChild(p); }
-  p.innerHTML = `<span class="spin"></span>${esc(msg)}`;
+  if (!p) {
+    p = document.createElement('div'); p.id = 'working'; p.setAttribute('role', 'status');
+    p.innerHTML = '<div class="w-top"><span class="w-msg"></span><span class="w-pct"></span></div><div class="w-bar"><i></i></div>';
+    document.body.appendChild(p);
+  }
+  const known = frac != null;
+  p.classList.toggle('indet', !known);
+  p.querySelector('.w-msg').textContent = msg;
+  p.querySelector('.w-pct').textContent = known ? Math.round(frac * 100) + '%' : '';
+  p.querySelector('.w-bar i').style.width = known ? frac * 100 + '%' : '';
 }
 /* Attach when one charge clearly wins: same amount, plus the vendor or the date. */
 function sureMatch(text, taken){
@@ -1829,6 +1860,7 @@ const Demo = (() => {
     deleteCharge: id => { rows = rows.filter(r => r.id !== id); return wait({ok:true}); },
     setStatus: (id, s) => wait(touch(Object.assign(find(id), {status:s}))),
     addNote: (id, t) => { const r = find(id); r.notes.push({by:me, at:new Date().toISOString(), text:t}); return wait(touch(r)); },
+    setInvoiceNo: (id, fid, v) => { const r = find(id); const f = r.files.find(x => x.id === fid); f.invoiceNo = v; f.manual = true; return wait(touch(r)); },
     updateMany: (ids, field, v) => wait(ids.map(id => touch(Object.assign(find(id), {[field]:v})))),
     saveSummary: (email, on) => wait({email, on}),
     sendMonthlySummary: () => wait({sent:true, count:rows.filter(r => r.status !== 'Done' && r.status !== 'Lost').length}),

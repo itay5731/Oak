@@ -27,7 +27,7 @@ everyone holding a company card.
   invoices** on your phone. Oak reads each one, scans and photos included, finds the amount, vendor, date and
   invoice number, and attaches it to its charge. Only the files it isn't sure about wait for you to pick.
 - **Invoice numbers, kept.** Each invoice number has its own column in the list, is saved in the data sheet, and
-  you can search by it. Drop the same invoice twice and Oak tells you instead of attaching it again. For invoices
+  you can search by it or click to copy it. If the reading got it wrong, fix it in the side panel. Drop the same invoice twice and Oak tells you instead of attaching it again. For invoices
   attached earlier, **Settings → Drive → Read numbers** fills them in.
 - **Your Drive stays tidy.** Every invoice is saved to your Drive folder, renamed to
   `2026-10-21 LINEAR APP 19.00 USD.pdf` and sorted into a folder per month. Delete it in Oak and it moves to Drive's trash too.
